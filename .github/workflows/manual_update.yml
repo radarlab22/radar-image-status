@@ -19,7 +19,7 @@ jobs:
         run: pip install requests pillow
 
       - name: Run script
-        run: python fetch_status.py
+        run: python get_caz_mausam.py
 
       - name: Copy latest file
         run: |
