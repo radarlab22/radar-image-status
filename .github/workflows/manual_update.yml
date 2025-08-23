@@ -18,6 +18,10 @@ jobs:
       - name: Install dependencies
         run: pip install requests pillow
 
+      - name: keep only last 03 json files
+        run: |
+          ls -t status_caz_*.json | tail -n +4 | xargs -r rm --
+
       - name: Run script
         run: python get_caz_mausam.py
 
@@ -35,3 +39,7 @@ jobs:
           git add status_caz_*.json status_caz_latest.json
           git commit -m "Manual update" || echo "No changes to commit"
           git push
+      
+      
+
+
