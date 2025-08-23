@@ -1,0 +1,35 @@
+name: Manual Station Update
+
+on:
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: pip install requests pillow
+
+      - name: Run script
+        run: python fetch_status.py
+
+      - name: Copy latest file
+        run: |
+          LATEST=$(ls -t status_caz_*.json | head -n 1)
+          cp "$LATEST" status_caz_latest.json
+
+      - name: Commit and push
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add status_caz_*.json status_caz_latest.json
+          git commit -m "Manual update"
+          git push
