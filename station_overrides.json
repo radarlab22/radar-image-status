@@ -1,0 +1,20 @@
+[
+  {
+    "stn": "mbr",
+    "status": "Under Maintenance",
+    "date": "2025-08-13",
+    "time": "10:30:00"
+  },
+  {
+    "stn": "sur",
+    "status": "Offline",
+    "date": "2025-08-22",
+    "time": "18:45:00"
+  },
+  {
+    "stn": "mur",
+    "status": "Data Unavailable",
+    "date": "2025-08-23",
+    "time": "12:15:00"
+  }
+]

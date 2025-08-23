@@ -1,0 +1,283 @@
+[
+  {
+    "station": "agt",
+    "date": "2025-08-23",
+    "time": "15:52:24",
+    "status": "ok",
+    "product_type": "caz"
+  },
+  {
+    "station": "aya",
+    "date": "2025-08-23",
+    "time": "15:20:02",
+    "status": "ok",
+    "product_type": "caz"
+  },
+  {
+    "station": "bnh",
+    "date": "2025-08-23",
+    "time": "15:40:02",
+    "status": "ok",
+    "product_type": "caz"
+  },
+  {
+    "station": "bhj",
+    "date": "2025-08-22",
+    "time": "21:38:29",
+    "status": "ok",
+    "product_type": "caz"
+  },
+  {
+    "station": "bhp",
+    "date": "2025-08-23",
+    "time": "16:02:22",
+    "status": "ok",
+    "product_type": "caz"
+  },
+  {
+    "station": "cpj",
+    "date": "2025-08-17",
+    "time": "09:32:48",
+    "status": "ok",
+    "product_type": "caz"
+  },
+  {
+    "station": "cni",
+    "date": "2025-08-23",
+    "time": "15:50:00",
+    "status": "ok",
+    "product_type": "caz"
+  },
+  {
+    "station": "dli",
+    "date": "2025-08-05",
+    "time": "15:32:17",
+    "status": "ok",
+    "product_type": "caz"
+  },
+  {
+    "station": "dlh",
+    "date": "2025-08-23",
+    "time": "15:42:25",
+    "status": "ok",
+    "product_type": "caz"
+  },
+  {
+    "station": "goa",
+    "date": "Invalid",
+    "time": "Invalid",
+    "status": "invalid",
+    "product_type": "caz"
+  },
+  {
+    "station": "gop",
+    "date": "NA",
+    "time": "NA",
+    "status": "error",
+    "product_type": "caz",
+    "error_message": "cannot identify image file <_io.BytesIO object at 0x0000022ACBD25EE0>"
+  },
+  {
+    "station": "hyd",
+    "date": "2025-08-23",
+    "time": "15:53:49",
+    "status": "ok",
+    "product_type": "caz"
+  },
+  {
+    "station": "jot",
+    "date": "2025-08-23",
+    "time": "15:50:01",
+    "status": "ok",
+    "product_type": "caz"
+  },
+  {
+    "station": "jmu",
+    "date": "2025-08-23",
+    "time": "15:20:01",
+    "status": "ok",
+    "product_type": "caz"
+  },
+  {
+    "station": "jpr",
+    "date": "2025-08-23",
+    "time": "15:22:52",
+    "status": "ok",
+    "product_type": "caz"
+  },
+  {
+    "station": "kuf",
+    "date": "NA",
+    "time": "NA",
+    "status": "missing",
+    "product_type": "caz"
+  },
+  {
+    "station": "kkl",
+    "date": "2025-08-23",
+    "time": "15:48:22",
+    "status": "ok",
+    "product_type": "caz"
+  },
+  {
+    "station": "kol",
+    "date": "NA",
+    "time": "NA",
+    "status": "missing",
+    "product_type": "caz"
+  },
+  {
+    "station": "koc",
+    "date": "2025-08-23",
+    "time": "15:50:52",
+    "status": "ok",
+    "product_type": "caz"
+  },
+  {
+    "station": "leh",
+    "date": "2025-08-23",
+    "time": "15:50:01",
+    "status": "ok",
+    "product_type": "caz"
+  },
+  {
+    "station": "ldn",
+    "date": "2025-08-23",
+    "time": "15:50:02",
+    "status": "ok",
+    "product_type": "caz"
+  },
+  {
+    "station": "lkn",
+    "date": "2025-08-23",
+    "time": "16:02:12",
+    "status": "ok",
+    "product_type": "caz"
+  },
+  {
+    "station": "mks",
+    "date": "2025-08-23",
+    "time": "15:20:01",
+    "status": "ok",
+    "product_type": "caz"
+  },
+  {
+    "station": "mur",
+    "date": "NA",
+    "time": "NA",
+    "status": "missing",
+    "product_type": "caz"
+  },
+  {
+    "station": "mbr",
+    "date": "NA",
+    "time": "NA",
+    "status": "missing",
+    "product_type": "caz"
+  },
+  {
+    "station": "mpt",
+    "date": "2025-08-23",
+    "time": "15:52:00",
+    "status": "ok",
+    "product_type": "caz"
+  },
+  {
+    "station": "mum",
+    "date": "2025-08-23",
+    "time": "16:02:16",
+    "status": "ok",
+    "product_type": "caz"
+  },
+  {
+    "station": "ngp",
+    "date": "2025-08-23",
+    "time": "15:42:20",
+    "status": "ok",
+    "product_type": "caz"
+  },
+  {
+    "station": "pdp",
+    "date": "2025-08-23",
+    "time": "16:12:18",
+    "status": "ok",
+    "product_type": "caz"
+  },
+  {
+    "station": "plk",
+    "date": "2025-08-23",
+    "time": "15:57:01",
+    "status": "ok",
+    "product_type": "caz"
+  },
+  {
+    "station": "ptn",
+    "date": "2025-08-23",
+    "time": "16:02:23",
+    "status": "ok",
+    "product_type": "caz"
+  },
+  {
+    "station": "ptl",
+    "date": "2025-08-23",
+    "time": "15:52:23",
+    "status": "ok",
+    "product_type": "caz"
+  },
+  {
+    "station": "rpr",
+    "date": "NA",
+    "time": "NA",
+    "status": "missing",
+    "product_type": "caz"
+  },
+  {
+    "station": "shr",
+    "date": "2025-08-17",
+    "time": "10:14:52",
+    "status": "ok",
+    "product_type": "caz"
+  },
+  {
+    "station": "sur",
+    "date": "2025-08-21",
+    "time": "14:30:02",
+    "status": "ok",
+    "product_type": "caz"
+  },
+  {
+    "station": "slp",
+    "date": "NA",
+    "time": "NA",
+    "status": "missing",
+    "product_type": "caz"
+  },
+  {
+    "station": "srn",
+    "date": "2025-08-23",
+    "time": "16:00:00",
+    "status": "ok",
+    "product_type": "caz"
+  },
+  {
+    "station": "tvm",
+    "date": "2025-08-23",
+    "time": "15:54:57",
+    "status": "ok",
+    "product_type": "caz"
+  },
+  {
+    "station": "vrv",
+    "date": "2025-08-23",
+    "time": "15:51:37",
+    "status": "ok",
+    "product_type": "caz"
+  },
+  {
+    "station": "vsk",
+    "date": "2025-08-23",
+    "time": "15:30:00",
+    "status": "ok",
+    "product_type": "caz"
+  }
+]

@@ -1,0 +1,316 @@
+[
+  {
+    "station": "agt",
+    "date": "NA",
+    "time": "NA",
+    "status": "problem",
+    "product_type": "caz",
+    "error_message": "can't subtract offset-naive and offset-aware datetimes"
+  },
+  {
+    "station": "aya",
+    "date": "NA",
+    "time": "NA",
+    "status": "problem",
+    "product_type": "caz",
+    "error_message": "can't subtract offset-naive and offset-aware datetimes"
+  },
+  {
+    "station": "bnh",
+    "date": "NA",
+    "time": "NA",
+    "status": "problem",
+    "product_type": "caz",
+    "error_message": "can't subtract offset-naive and offset-aware datetimes"
+  },
+  {
+    "station": "bhj",
+    "date": "NA",
+    "time": "NA",
+    "status": "problem",
+    "product_type": "caz",
+    "error_message": "can't subtract offset-naive and offset-aware datetimes"
+  },
+  {
+    "station": "bhp",
+    "date": "NA",
+    "time": "NA",
+    "status": "problem",
+    "product_type": "caz",
+    "error_message": "can't subtract offset-naive and offset-aware datetimes"
+  },
+  {
+    "station": "cpj",
+    "date": "NA",
+    "time": "NA",
+    "status": "problem",
+    "product_type": "caz",
+    "error_message": "can't subtract offset-naive and offset-aware datetimes"
+  },
+  {
+    "station": "cni",
+    "date": "NA",
+    "time": "NA",
+    "status": "problem",
+    "product_type": "caz",
+    "error_message": "can't subtract offset-naive and offset-aware datetimes"
+  },
+  {
+    "station": "dli",
+    "date": "NA",
+    "time": "NA",
+    "status": "problem",
+    "product_type": "caz",
+    "error_message": "can't subtract offset-naive and offset-aware datetimes"
+  },
+  {
+    "station": "dlh",
+    "date": "NA",
+    "time": "NA",
+    "status": "problem",
+    "product_type": "caz",
+    "error_message": "can't subtract offset-naive and offset-aware datetimes"
+  },
+  {
+    "station": "goa",
+    "date": "NA",
+    "time": "NA",
+    "status": "problem",
+    "product_type": "caz",
+    "error_message": "can't subtract offset-naive and offset-aware datetimes"
+  },
+  {
+    "station": "gop",
+    "date": "NA",
+    "time": "NA",
+    "status": "problem",
+    "product_type": "caz",
+    "error_message": "cannot identify image file <_io.BytesIO object at 0x0000015503E21FD0>"
+  },
+  {
+    "station": "hyd",
+    "date": "NA",
+    "time": "NA",
+    "status": "problem",
+    "product_type": "caz",
+    "error_message": "can't subtract offset-naive and offset-aware datetimes"
+  },
+  {
+    "station": "jot",
+    "date": "NA",
+    "time": "NA",
+    "status": "problem",
+    "product_type": "caz",
+    "error_message": "can't subtract offset-naive and offset-aware datetimes"
+  },
+  {
+    "station": "jmu",
+    "date": "NA",
+    "time": "NA",
+    "status": "problem",
+    "product_type": "caz",
+    "error_message": "can't subtract offset-naive and offset-aware datetimes"
+  },
+  {
+    "station": "jpr",
+    "date": "NA",
+    "time": "NA",
+    "status": "problem",
+    "product_type": "caz",
+    "error_message": "can't subtract offset-naive and offset-aware datetimes"
+  },
+  {
+    "station": "kuf",
+    "date": "NA",
+    "time": "NA",
+    "status": "Timestamp Missing",
+    "product_type": "caz"
+  },
+  {
+    "station": "kkl",
+    "date": "NA",
+    "time": "NA",
+    "status": "problem",
+    "product_type": "caz",
+    "error_message": "can't subtract offset-naive and offset-aware datetimes"
+  },
+  {
+    "station": "kol",
+    "date": "NA",
+    "time": "NA",
+    "status": "problem",
+    "product_type": "caz",
+    "error_message": "can't subtract offset-naive and offset-aware datetimes"
+  },
+  {
+    "station": "koc",
+    "date": "NA",
+    "time": "NA",
+    "status": "problem",
+    "product_type": "caz",
+    "error_message": "can't subtract offset-naive and offset-aware datetimes"
+  },
+  {
+    "station": "leh",
+    "date": "NA",
+    "time": "NA",
+    "status": "problem",
+    "product_type": "caz",
+    "error_message": "can't subtract offset-naive and offset-aware datetimes"
+  },
+  {
+    "station": "ldn",
+    "date": "NA",
+    "time": "NA",
+    "status": "problem",
+    "product_type": "caz",
+    "error_message": "can't subtract offset-naive and offset-aware datetimes"
+  },
+  {
+    "station": "lkn",
+    "date": "NA",
+    "time": "NA",
+    "status": "problem",
+    "product_type": "caz",
+    "error_message": "can't subtract offset-naive and offset-aware datetimes"
+  },
+  {
+    "station": "mks",
+    "date": "NA",
+    "time": "NA",
+    "status": "problem",
+    "product_type": "caz",
+    "error_message": "can't subtract offset-naive and offset-aware datetimes"
+  },
+  {
+    "station": "mur",
+    "date": "2025-08-23",
+    "time": "12:15:00",
+    "status": "Data Unavailable",
+    "product_type": "caz"
+  },
+  {
+    "station": "mbr",
+    "date": "2025-08-13",
+    "time": "10:30:00",
+    "status": "Under Maintenance",
+    "product_type": "caz"
+  },
+  {
+    "station": "mpt",
+    "date": "NA",
+    "time": "NA",
+    "status": "problem",
+    "product_type": "caz",
+    "error_message": "can't subtract offset-naive and offset-aware datetimes"
+  },
+  {
+    "station": "mum",
+    "date": "NA",
+    "time": "NA",
+    "status": "problem",
+    "product_type": "caz",
+    "error_message": "can't subtract offset-naive and offset-aware datetimes"
+  },
+  {
+    "station": "ngp",
+    "date": "NA",
+    "time": "NA",
+    "status": "problem",
+    "product_type": "caz",
+    "error_message": "can't subtract offset-naive and offset-aware datetimes"
+  },
+  {
+    "station": "pdp",
+    "date": "NA",
+    "time": "NA",
+    "status": "problem",
+    "product_type": "caz",
+    "error_message": "can't subtract offset-naive and offset-aware datetimes"
+  },
+  {
+    "station": "plk",
+    "date": "NA",
+    "time": "NA",
+    "status": "problem",
+    "product_type": "caz",
+    "error_message": "can't subtract offset-naive and offset-aware datetimes"
+  },
+  {
+    "station": "ptn",
+    "date": "NA",
+    "time": "NA",
+    "status": "problem",
+    "product_type": "caz",
+    "error_message": "can't subtract offset-naive and offset-aware datetimes"
+  },
+  {
+    "station": "ptl",
+    "date": "NA",
+    "time": "NA",
+    "status": "problem",
+    "product_type": "caz",
+    "error_message": "can't subtract offset-naive and offset-aware datetimes"
+  },
+  {
+    "station": "rpr",
+    "date": "NA",
+    "time": "NA",
+    "status": "Timestamp Missing",
+    "product_type": "caz"
+  },
+  {
+    "station": "shr",
+    "date": "NA",
+    "time": "NA",
+    "status": "problem",
+    "product_type": "caz",
+    "error_message": "can't subtract offset-naive and offset-aware datetimes"
+  },
+  {
+    "station": "sur",
+    "date": "2025-08-22",
+    "time": "18:45:00",
+    "status": "Offline",
+    "product_type": "caz"
+  },
+  {
+    "station": "slp",
+    "date": "NA",
+    "time": "NA",
+    "status": "Timestamp Missing",
+    "product_type": "caz"
+  },
+  {
+    "station": "srn",
+    "date": "NA",
+    "time": "NA",
+    "status": "problem",
+    "product_type": "caz",
+    "error_message": "can't subtract offset-naive and offset-aware datetimes"
+  },
+  {
+    "station": "tvm",
+    "date": "NA",
+    "time": "NA",
+    "status": "problem",
+    "product_type": "caz",
+    "error_message": "can't subtract offset-naive and offset-aware datetimes"
+  },
+  {
+    "station": "vrv",
+    "date": "NA",
+    "time": "NA",
+    "status": "problem",
+    "product_type": "caz",
+    "error_message": "can't subtract offset-naive and offset-aware datetimes"
+  },
+  {
+    "station": "vsk",
+    "date": "NA",
+    "time": "NA",
+    "status": "problem",
+    "product_type": "caz",
+    "error_message": "can't subtract offset-naive and offset-aware datetimes"
+  }
+]
