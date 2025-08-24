@@ -6,52 +6,39 @@
 <title>Station Status Dashboard</title>
 <style>
   body {
-    font-family: 'Segoe UI', Arial, sans-serif;
-    margin: 0;
-    padding: 20px;
-    background: #f0f2f5;
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    background: #f9fafb;
     color: #333;
   }
   h1 {
     text-align: center;
     margin-bottom: 20px;
-    color: #222;
   }
   table {
     width: 100%;
     border-collapse: collapse;
     background: #fff;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    border-radius: 8px;
-    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
   th, td {
-    padding: 12px 15px;
-    border-bottom: 1px solid #ddd;
-    text-align: left;
+    padding: 10px;
+    border: 1px solid #e5e7eb;
+    text-align: center;
   }
   th {
-    background: #fafafa;
+    background: #f3f4f6;
     font-weight: bold;
-    text-transform: uppercase;
-    font-size: 0.9rem;
-    letter-spacing: 0.05em;
   }
-  tr:last-child td {
-    border-bottom: none;
+  tr.ok-row {
+    background-color: #d1fae5; /* Light green */
   }
-  .Ok {
-    background-color: #e6f4ea;
+  tr.problem-row {
+    background-color: #fee2e2; /* Light red */
   }
-  .Not\ Ok {
-    background-color: #fdecea;
-  }
-  .Timestamp\ Missing,
-  .problem {
-    background-color: #fff7e6;
-  }
-  .status-cell {
-    font-weight: bold;
+  .timestamp {
+    font-size: 0.9em;
+    color: #555;
   }
 </style>
 </head>
@@ -61,35 +48,60 @@
   <thead>
     <tr>
       <th>Station</th>
-      <th>Date</th>
-      <th>Time</th>
-      <th>Status</th>
-      <th>Product</th>
-      <th>Error</th>
+      <th>CAZ</th>
+      <th>PPI</th>
+      <th>SRI</th>
+      <th>PPZ</th>
+      <th>PPV</th>
+      <th>VP2</th>
+      <th>PAC</th>
+      <th>Overall</th>
     </tr>
   </thead>
   <tbody></tbody>
 </table>
 <script>
+const THRESHOLDS = {
+  caz: 30, ppi: 30, sri: 30, ppz: 30, ppv: 30, vp2: 30, pac: 1440
+};
+
 async function loadLatest() {
-  const response = await fetch('status_caz_latest.json'); // always overwritten
+  const response = await fetch('status_caz_latest.json'); // Should be merged JSON with all products
   const data = await response.json();
   const tbody = document.querySelector('tbody');
   tbody.innerHTML = '';
-  data.forEach(item => {
+
+  data.forEach(station => {
     const tr = document.createElement('tr');
-    tr.className = item.status.replace(/\s/g, '\\ ');
+    let allOk = true;
+
+    const productCells = Object.keys(THRESHOLDS).map(product => {
+      const entry = station[product];
+      if (!entry || !entry.timestamp) {
+        allOk = false;
+        return `<td class="timestamp">Missing</td>`;
+      }
+
+      const timestamp = new Date(entry.timestamp);
+      const ageMinutes = (Date.now() - timestamp.getTime()) / 60000;
+
+      if (ageMinutes > THRESHOLDS[product]) {
+        allOk = false;
+      }
+
+      return `<td class="timestamp">${entry.timestamp}</td>`;
+    }).join('');
+
+    tr.className = allOk ? 'ok-row' : 'problem-row';
     tr.innerHTML = `
-      <td>${item.station.toUpperCase()}</td>
-      <td>${item.date}</td>
-      <td>${item.time}</td>
-      <td class="status-cell">${item.status}</td>
-      <td>${item.product_type}</td>
-      <td>${item.error_message || ''}</td>
+      <td>${station.name.toUpperCase()}</td>
+      ${productCells}
+      <td>${allOk ? '✔️' : '❌'}</td>
     `;
     tbody.appendChild(tr);
   });
 }
+
 loadLatest();
 </script>
 </body>
