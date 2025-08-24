@@ -28,7 +28,7 @@ jobs:
       - name: Copy latest file
         run: |
           LATEST=$(ls -t status_caz_*.json | head -n 1)
-          cp "$LATEST" status_caz_latest.json
+          cp "$LATEST" status_all_latest.json
 
       - name: Commit and push
         env:
