@@ -38,7 +38,8 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add status_caz_*.json status_caz_latest.json
           git commit -m "Manual update" || echo "No changes to commit"
-          git push
+          git pull --rebase origin main
+          git push origin main
       
       
 
