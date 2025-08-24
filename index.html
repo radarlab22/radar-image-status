@@ -61,42 +61,33 @@
   <tbody></tbody>
 </table>
 <script>
-const THRESHOLDS = {
-  caz: 30, ppi: 30, sri: 30, ppz: 30, ppv: 30, vp2: 30, pac: 1440
-};
-
 async function loadLatest() {
-  const response = await fetch('status_caz_latest.json'); // Should be merged JSON with all products
+  const response = await fetch('status_all_latest.json');
+  if (!response.ok) {
+    console.error('Failed to load JSON');
+    return;
+  }
+
   const data = await response.json();
   const tbody = document.querySelector('tbody');
   tbody.innerHTML = '';
 
   data.forEach(station => {
     const tr = document.createElement('tr');
-    let allOk = true;
+    const isOk = station.overall === '✔️';
 
-    const productCells = Object.keys(THRESHOLDS).map(product => {
-      const entry = station[product];
-      if (!entry || !entry.timestamp) {
-        allOk = false;
-        return `<td class="timestamp">Missing</td>`;
-      }
+    const productCells = ['caz','ppi','sri','ppz','ppv','vp2','pac']
+      .map(product => {
+        const timestampStr = station[product];
+        return `<td class="timestamp">${timestampStr || 'Missing'}</td>`;
+      })
+      .join('');
 
-      const timestamp = new Date(entry.timestamp);
-      const ageMinutes = (Date.now() - timestamp.getTime()) / 60000;
-
-      if (ageMinutes > THRESHOLDS[product]) {
-        allOk = false;
-      }
-
-      return `<td class="timestamp">${entry.timestamp}</td>`;
-    }).join('');
-
-    tr.className = allOk ? 'ok-row' : 'problem-row';
+    tr.className = isOk ? 'ok-row' : 'problem-row';
     tr.innerHTML = `
-      <td>${station.name.toUpperCase()}</td>
+      <td>${station.station.toUpperCase()}</td>
       ${productCells}
-      <td>${allOk ? '✔️' : '❌'}</td>
+      <td>${station.overall}</td>
     `;
     tbody.appendChild(tr);
   });
