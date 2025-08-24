@@ -23,7 +23,7 @@ jobs:
           ls -t status_caz_*.json | tail -n +4 | xargs -r rm --
 
       - name: Run script
-        run: python get_caz_mausam.py
+        run: python get_mausam_rdr_img_status.py
 
       - name: Copy latest file
         run: |
