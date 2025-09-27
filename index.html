@@ -3,107 +3,229 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DWR Images</title>
+<title>DWR Stations Mausam Dashboard</title>
 <style>
   body {
     font-family: Arial, sans-serif;
     margin: 20px;
-    background: #f9fafb;
-    color: #333;
+    background: #f3f4f6;
+    color: #111;
   }
   h1 {
     text-align: center;
-    margin-bottom: 20px;
+    margin-bottom: 5px;
+    color: #1f2937;
+  }
+  h2 {
+    margin-top: 25px;
+    margin-bottom: 8px;
+    color: #111827;
+    border-bottom: 2px solid #d1d5db;
+    padding-bottom: 4px;
+  }
+  button {
+    display: block;
+    margin: 0 auto 15px auto;
+    padding: 8px 15px;
+    font-size: 1em;
+    background-color: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  button:hover {
+    background-color: #1d4ed8;
+  }
+  #searchBox {
+    display: block;
+    margin: 10px auto 20px auto;
+    padding: 8px;
+    width: 80%;
+    max-width: 400px;
+    border: 1px solid #9ca3af;
+    border-radius: 6px;
+    font-size: 1em;
   }
   table {
     width: 100%;
     border-collapse: collapse;
     background: #fff;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
   }
   th, td {
-    padding: 10px;
+    padding: 8px;
     border: 1px solid #e5e7eb;
     text-align: center;
   }
   th {
-    background: #f3f4f6;
+    background: #e5e7eb;
     font-weight: bold;
   }
   tr.ok-row {
-    background-color: #d1fae5; /* Light green */
+    background-color: #d1fae5; /* light green */
   }
   tr.problem-row {
-    background-color: #fee2e2; /* Light red */
+    background-color: #fee2e2; /* light red */
   }
   .timestamp {
-    font-size: 0.9em;
-    color: #555;
+    font-size: 0.85em;
+    color: #374151;
+  }
+  .manual-status {
+    color: red;
+    font-weight: bold;
   }
 </style>
 </head>
 <body>
-<h1 id="dashboardTitle">DWR Stations Mausam Image Dashboard</h1>
-<table id="statusTable">
-  <thead>
-    <tr>
-      <th>Station</th>
-      <th>CAZ</th>
-      <th>PPI</th>
-      <th>SRI</th>
-      <th>PPZ</th>
-      <th>PPV</th>
-      <th>VP2</th>
-      <th>PAC</th>
-      <th>Overall</th>
-    </tr>
-  </thead>
-  <tbody></tbody>
-</table>
+<h1 id="dashboardTitle">DWR Stations Mausam Dashboard</h1>
+
+<button onclick="toggleView()">Switch to Station-Wise View</button>
+<input type="text" id="searchBox" placeholder="🔍 Search station or state..." onkeyup="filterStations()">
+
+<div id="tableContainer"></div>
+
 <script>
+let stateWise = true; // default view
+
 async function loadLatest() {
-  const response = await fetch('status_all_latest.json');
-  if (!response.ok) {
-    console.error('Failed to load JSON');
-    return;
+  let data;
+  try {
+    const response = await fetch('status_all_latest.json');
+    if (response.ok) {
+      data = await response.json();
+      const lastModified = response.headers.get('last-modified');
+      if (lastModified) {
+        const date = new Date(lastModified);
+        const formattedDate = date.toLocaleString('en-IN', {
+          timeZone: 'Asia/Kolkata',
+          dateStyle: 'long',
+          timeStyle: 'short'
+        });
+        document.getElementById('dashboardTitle').textContent =
+          `DWR Stations Mausam Dashboard as on ${formattedDate}`;
+      }
+    } else {
+      data = []; // fallback
+    }
+  } catch (err) {
+    console.warn("Could not fetch JSON, fallback to empty data", err);
+    data = [];
   }
 
-  // Get the last modified timestamp from the HTTP response header
-  const lastModified = response.headers.get('last-modified');
-  if (lastModified) {
-    const date = new Date(lastModified);
-    const formattedDate = date.toLocaleString('en-IN', {
-      timeZone: 'Asia/Kolkata', // Change if you want UTC or local server time
-      dateStyle: 'long',
-      timeStyle: 'short'
+  renderTables(data);
+}
+
+function renderTables(data) {
+  const container = document.getElementById('tableContainer');
+  container.innerHTML = '';
+
+  if (stateWise) {
+    // group by state
+    const grouped = {};
+    data.forEach(st => {
+      const state = st.state || "Unknown";
+      if (!grouped[state]) grouped[state] = [];
+      grouped[state].push(st);
     });
-    document.getElementById('dashboardTitle').textContent =
-      `DWR Stations Mausam Image Dashboard as on ${formattedDate}`;
+
+    Object.keys(grouped).sort().forEach(state => {
+      const stations = grouped[state];
+      const stateHeader = document.createElement('h2');
+      stateHeader.textContent = state;
+      container.appendChild(stateHeader);
+
+      container.appendChild(createTable(stations));
+    });
+  } else {
+    // flat station-wise table
+    container.appendChild(createTable(data, "All Stations"));
+  }
+}
+
+function createTable(stations, title) {
+  const table = document.createElement('table');
+  if (title) {
+    const capRow = document.createElement('caption');
+    capRow.textContent = title;
+    capRow.style.fontWeight = "bold";
+    capRow.style.marginBottom = "5px";
+    table.appendChild(capRow);
   }
 
-  const data = await response.json();
-  const tbody = document.querySelector('tbody');
-  tbody.innerHTML = '';
+  table.innerHTML = `
+    <thead>
+      <tr>
+        <th>Station</th>
+        <th>CAZ</th>
+        <th>PPI</th>
+        <th>SRI</th>
+        <th>PPZ</th>
+        <th>PPV</th>
+        <th>VP2</th>
+        <th>PAC</th>
+        <th>Overall</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  `;
+  const tbody = table.querySelector('tbody');
 
-  data.forEach(station => {
+  stations.forEach(station => {
     const tr = document.createElement('tr');
-    const isOk = station.overall === '✔️';
+    tr.className = station.overall === '✔️' ? 'ok-row' : 'problem-row';
 
-    const productCells = ['caz','ppi','sri','ppz','ppv','vp2','pac']
-      .map(product => {
-        const timestampStr = station[product];
-        return `<td class="timestamp">${timestampStr || 'Missing'}</td>`;
-      })
-      .join('');
-
-    tr.className = isOk ? 'ok-row' : 'problem-row';
-    tr.innerHTML = `
-      <td>${station.station.toUpperCase()}</td>
-      ${productCells}
-      <td>${station.overall}</td>
-    `;
+    if (station.manual_status) {
+      tr.innerHTML = `
+        <td>${station.name} (${station.station.toUpperCase()})</td>
+        <td colspan="7" class="manual-status">${station.manual_status}</td>
+        <td>❌</td>
+      `;
+    } else {
+      const productCells = ['caz','ppi','sri','ppz','ppv','vp2','pac']
+        .map(p => `<td class="timestamp">${station[p] || 'Missing'}</td>`).join('');
+      tr.innerHTML = `<td>${station.name} (${station.station.toUpperCase()})</td>${productCells}<td>${station.overall}</td>`;
+    }
     tbody.appendChild(tr);
   });
+
+  return table;
+}
+
+function filterStations() {
+  const query = document.getElementById('searchBox').value.toLowerCase();
+  const container = document.getElementById('tableContainer');
+  const tables = container.querySelectorAll('table');
+
+  tables.forEach(table => {
+    const rows = table.querySelectorAll('tbody tr');
+    let anyVisible = false;
+    rows.forEach(row => {
+      const text = row.textContent.toLowerCase();
+      if (text.includes(query)) {
+        row.style.display = '';
+        anyVisible = true;
+      } else {
+        row.style.display = 'none';
+      }
+    });
+    table.style.display = anyVisible ? '' : 'none';
+  });
+
+  const headers = container.querySelectorAll('h2');
+  headers.forEach(h => {
+    const table = h.nextElementSibling;
+    if (table && table.style.display === 'none') h.style.display = 'none';
+    else h.style.display = '';
+  });
+}
+
+function toggleView() {
+  stateWise = !stateWise;
+  document.querySelector('button').textContent = stateWise ? 'Switch to Station-Wise View' : 'Switch to State-Wise View';
+  loadLatest();
 }
 
 loadLatest();

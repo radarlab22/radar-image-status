@@ -5,6 +5,50 @@ from io import BytesIO
 import json
 import os
 
+STATION_INFO = {
+    "agt": {"name": "Agartala", "state": "Tripura"},
+    "aya": {"name": "Delhi Ayanagar", "state": "Delhi"},
+    "bnh": {"name": "Banihal", "state": "Jammu & Kashmir"},
+    "bhj": {"name": "Bhuj", "state": "Gujrat"},
+    "bhp": {"name": "Bhopal", "state": "Madhya Pradesh"},
+    "cpj": {"name": "Cherapunji", "state": "Meghalaya"},
+    "cni": {"name": "Chennai", "state": "Tamilnadu"},
+    "dli": {"name": "Delhi Hq", "state": "Delhi"},
+    "dlh": {"name": "Delhi Palam", "state": "Delhi"},
+    "goa": {"name": "Goa", "state": "Goa"},
+    "gop": {"name": "Gopalpur", "state": "Odhisa"},
+    "hyd": {"name": "Hyderabad", "state": "Telangana"},
+    "jot": {"name": "Jot", "state": "Himachal Pradesh"},
+    "jmu": {"name": "Jammu", "state": "Jammu & Kashmir"},
+    "jpr": {"name": "Jaipur", "state": "Rajasthan"},
+    "kuf": {"name": "Kufri", "state": "Himachal Pradesh"},
+    "kkl": {"name": "Karaikal", "state": "Puducherry"},
+    "kol": {"name": "Kolkata", "state": "West Bengal"},
+    "koc": {"name": "Kochi", "state": "Kerala"},
+    "leh": {"name": "Leh", "state": "Ladakh"},
+    "ldn": {"name": "Lansdowne", "state": "Uttrakhand"},
+    "lkn": {"name": "Lucknow", "state": "Uttar Pradesh"},
+    "mks": {"name": "Mukteshwar", "state": "Uttrakhand"},
+    "mur": {"name": "Murari Devi", "state": "Himachal Pradesh"},
+    "mbr": {"name": "Mohanbari", "state": "Assam"},
+    "mpt": {"name": "Machilipatnam", "state": "Andhra Pradesh"},
+    "mum": {"name": "Mumbai", "state": "Maharashtra"},
+    "ngp": {"name": "Nagpur", "state": "Maharashtra"},
+    "pdp": {"name": "Paradip", "state": "Odhisa"},
+    "plk": {"name": "Pallikarni", "state": "Tamilnadu"},
+    "ptn": {"name": "Patna", "state": "Bihar"},
+    "ptl": {"name": "Patiala", "state": "Punjab"},
+    "rpr": {"name": "Raipur", "state": "Chattisgarh"},
+    "shr": {"name": "Sriharikota", "state": "Andhra Pradesh"},
+    "sur": {"name": "Surkanda Devi", "state": "Uttrakhand"},
+    "slp": {"name": "Solapur", "state": "Maharashtra"},
+    "srn": {"name": "Srinagar", "state": "Jammu & Kashmir"},
+    "tvm": {"name": "Trivandrum", "state": "Kerala"},
+    "vrv": {"name": "Veravai", "state": "Maharashtra"},
+    "vsk": {"name": "Visakhapatnam", "state": "Andhra Pradesh"}
+}
+
+
 stations = [
     "agt","aya","bnh","bhj","bhp","cpj","cni","dli","dlh","goa","gop","hyd",
     "jot","jmu","jpr","kuf","kkl","kol","koc","leh","ldn","lkn","mks","mur",
@@ -74,7 +118,21 @@ def get_all_product_status(stations, products, thresholds, overrides):
     final_data = []
     with requests.Session() as session:
         for s in stations:
-            row = {"station": s}
+            # Add name and state from STATION_INFO
+            row = {
+                "station": s,
+                "name": STATION_INFO.get(s, {}).get("name", s.upper()),
+                "state": STATION_INFO.get(s, {}).get("state", "Unknown"),
+            }
+
+            print(row)
+            # Check for manual override
+            if s in overrides and "manual_status" in overrides[s]:
+                row["manual_status"] = overrides[s]["manual_status"]
+                row["overall"] = "❌"
+                final_data.append(row)
+                continue  # Skip fetching products
+
             all_ok = True
             for product in products:
                 threshold = thresholds.get(product, 30)
@@ -86,9 +144,12 @@ def get_all_product_status(stations, products, thresholds, overrides):
                     row[product] = ts
                     if not ok:
                         all_ok = False
+
             row["overall"] = "✔️" if all_ok else "❌"
             final_data.append(row)
+
     return final_data
+
 
 if __name__ == "__main__":
     overrides = load_station_overrides()
