@@ -6,15 +6,27 @@
     "time": "10:30:00"
   },
   {
-    "stn": "sur",
-    "status": "Offline",
-    "date": "2025-08-22",
-    "time": "18:45:00"
+    "stn": "dli",
+    "status": "TX Fault",
+    "date": "16.06.2025",
+    "time": ""
+  },
+  {
+    "stn": "dlh",
+    "status": "Replacement of the Slip Ring Assembly",
+    "date": "2025-09-23",
+    "time": ""
   },
   {
     "stn": "mur",
-    "status": "Data Unavailable",
-    "date": "2025-08-23",
-    "time": "12:15:00"
+    "status": "Servo link issue",
+    "date": "2025-09-12",
+    "time": ""
+  }
+  {
+    "stn": "jmu",
+    "status": "Transformer Blast Followed By Sudden Blast",
+    "date": "2025-09-02",
+    "time": ""
   }
 ]

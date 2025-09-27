@@ -118,17 +118,21 @@ def get_all_product_status(stations, products, thresholds, overrides):
     final_data = []
     with requests.Session() as session:
         for s in stations:
-            # Add name and state from STATION_INFO
+            # Add name and state
             row = {
                 "station": s,
                 "name": STATION_INFO.get(s, {}).get("name", s.upper()),
                 "state": STATION_INFO.get(s, {}).get("state", "Unknown"),
             }
 
-            print(row)
             # Check for manual override
-            if s in overrides and "manual_status" in overrides[s]:
-                row["manual_status"] = overrides[s]["manual_status"]
+            if s in overrides:
+                override = overrides[s]
+                # build manual_status string
+                status_str = override.get("status", "Unknown")
+                date_str = override.get("date", "")
+                time_str = override.get("time", "")
+                row["manual_status"] = f"{status_str} Since {date_str} {time_str}".strip()
                 row["overall"] = "❌"
                 final_data.append(row)
                 continue  # Skip fetching products
@@ -136,20 +140,15 @@ def get_all_product_status(stations, products, thresholds, overrides):
             all_ok = True
             for product in products:
                 threshold = thresholds.get(product, 30)
-                if s in overrides and product in overrides[s]:
-                    ts = overrides[s][product].get("timestamp", "NA")
-                    row[product] = ts
-                else:
-                    ts, ok = fetch_product_time(s, product, threshold, session)
-                    row[product] = ts
-                    if not ok:
-                        all_ok = False
+                ts, ok = fetch_product_time(s, product, threshold, session)
+                row[product] = ts
+                if not ok:
+                    all_ok = False
 
             row["overall"] = "✔️" if all_ok else "❌"
             final_data.append(row)
 
     return final_data
-
 
 if __name__ == "__main__":
     overrides = load_station_overrides()
