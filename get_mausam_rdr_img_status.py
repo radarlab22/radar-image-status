@@ -46,18 +46,26 @@ def fetch_product_time(station, product_type, threshold_mins, session):
         with Image.open(BytesIO(response.content)) as im:
             ts = im.info.get('comment')
             if ts:
-                timestamp = ts.decode()
+                #timestamp = ts.decode()
                 try:
-                    dt_naive = datetime.fromisoformat(timestamp)
+                    dt_naive = datetime.fromisoformat(ts.decode())
                     dt = dt_naive.replace(tzinfo=IST)
-                    if now - dt > timedelta(minutes=threshold_mins):
-                        return dt.strftime("%Y-%m-%d %H:%M:%S"), False
-                    else:
-                        return dt.strftime("%Y-%m-%d %H:%M:%S"), True
                 except ValueError:
                     return "Invalid", False
             else:
-                return "Missing", False
+                last_modified = response.headers.get("Last-Modified")
+                if last_modified:
+                    try:
+                        dt = datetime.strptime(last_modified, "%a, %d %b %Y %H:%M:%S %Z").astimezone(IST)
+                    except ValueError:
+                        return "Invalid", False
+                else:
+                    return "Missing", False
+            if now - dt > timedelta(minutes=threshold_mins):
+                return dt.strftime("%Y-%m-%d %H:%M:%S"), False
+            else:
+                return dt.strftime("%Y-%m-%d %H:%M:%S"), True
+            
     except Exception:
         return "Missing", False
 
