@@ -65,7 +65,7 @@ PRODUCT_THRESHOLDS = {
     "ppz": 120,
     "ppv": 120,
     "vp2": 120,
-    "pac": 1440
+    "pac": 4320
 }
 
 IST = timezone(timedelta(hours=5, minutes=30))
