@@ -65,7 +65,7 @@ PRODUCT_THRESHOLDS = {
     "ppz": 120,
     "ppv": 120,
     "vp2": 120,
-    "pac": 4320
+    "pac": 1440
 }
 
 IST = timezone(timedelta(hours=5, minutes=30))
@@ -142,7 +142,7 @@ def get_all_product_status(stations, products, thresholds, overrides):
                 threshold = thresholds.get(product, 30)
                 ts, ok = fetch_product_time(s, product, threshold, session)
                 row[product] = ts
-                if not ok:
+                if product != "pac" and not ok:
                     all_ok = False
 
             row["overall"] = "✔️" if all_ok else "❌"
