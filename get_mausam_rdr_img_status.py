@@ -105,6 +105,17 @@ def fetch_product_time(station, product_type, threshold_mins, session):
                         return "Invalid", False
                 else:
                     return "Missing", False
+
+            if station == "koc":
+                try:
+                    y, m, d = dt.year, dt.month, dt.day
+                    if m <= 12 and d <= 12 and d != m:
+                        fixed_dt = datetime(y, d, m, dt.hour, dt.minute, dt.second, tzinfo=IST)
+                        if abs((now - fixed_dt)) < abs((now - dt)):
+                            dt = fixed_dt
+                except Exception:
+                    pass
+                    
             if now - dt > timedelta(minutes=threshold_mins):
                 return dt.strftime("%Y-%m-%d %H:%M:%S"), False
             else:
