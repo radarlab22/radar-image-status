@@ -122,6 +122,8 @@ function renderTables(data) {
   const container = document.getElementById('tableContainer');
   container.innerHTML = '';
 
+  let globalSlNo = 0; // initialize global counter
+
   if (stateWise) {
     // group by state
     const grouped = {};
@@ -137,23 +139,15 @@ function renderTables(data) {
       stateHeader.textContent = state;
       container.appendChild(stateHeader);
 
-      container.appendChild(createTable(stations));
+      globalSlNo = createTable(stations, container, globalSlNo); // pass and update global counter
     });
   } else {
-    // flat station-wise table
-    container.appendChild(createTable(data, "All Stations"));
+    createTable(data, container, 0); // flat station-wise table resets counter
   }
 }
 
-function createTable(stations, title) {
+function createTable(stations, container, slCounter) {
   const table = document.createElement('table');
-  if (title) {
-    const capRow = document.createElement('caption');
-    capRow.textContent = title;
-    capRow.style.fontWeight = "bold";
-    capRow.style.marginBottom = "5px";
-    table.appendChild(capRow);
-  }
 
   table.innerHTML = `
     <thead>
@@ -174,29 +168,29 @@ function createTable(stations, title) {
   `;
   const tbody = table.querySelector('tbody');
 
-  stations.forEach((station, index) => {
-  const tr = document.createElement('tr');
-  tr.className = station.overall === '✔️' ? 'ok-row' : 'problem-row';
-  const slNo = index + 1;
+  stations.forEach(station => {
+    slCounter++; // increment global counter
+    const tr = document.createElement('tr');
+    tr.className = station.overall === '✔️' ? 'ok-row' : 'problem-row';
 
-  if (station.manual_status) {
-    tr.innerHTML = `
-      <td>${slNo}</td>
-      <td>${station.name} (${station.station.toUpperCase()})</td>
-      <td colspan="7" class="manual-status">${station.manual_status}</td>
-      <td>❌</td>
-    `;
-  } else {
-    const productCells = ['caz','ppi','sri','ppz','ppv','vp2','pac']
-      .map(p => `<td class="timestamp">${station[p] || 'Missing'}</td>`).join('');
-    tr.innerHTML = `<td>${slNo}</td><td>${station.name} (${station.station.toUpperCase()})</td>${productCells}<td>${station.overall}</td>`;
-  }
+    if (station.manual_status) {
+      tr.innerHTML = `
+        <td>${slCounter}</td>
+        <td>${station.name} (${station.station.toUpperCase()})</td>
+        <td colspan="7" class="manual-status">${station.manual_status}</td>
+        <td>❌</td>
+      `;
+    } else {
+      const productCells = ['caz','ppi','sri','ppz','ppv','vp2','pac']
+        .map(p => `<td class="timestamp">${station[p] || 'Missing'}</td>`).join('');
+      tr.innerHTML = `<td>${slCounter}</td><td>${station.name} (${station.station.toUpperCase()})</td>${productCells}<td>${station.overall}</td>`;
+    }
 
-  tbody.appendChild(tr);
-});
+    tbody.appendChild(tr);
+  });
 
-
-  return table;
+  container.appendChild(table);
+  return slCounter; // return updated counter
 }
 
 function filterStations() {
