@@ -13,40 +13,42 @@
   }
   h1 {
     text-align: center;
-    margin-bottom: 5px;
+    margin-bottom: 10px;
     color: #1f2937;
   }
-  h2 {
-    margin-top: 25px;
-    margin-bottom: 8px;
-    color: #111827;
-    border-bottom: 2px solid #d1d5db;
-    padding-bottom: 4px;
+
+  /* Top control bar */
+  .top-bar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 15px;
   }
+
   button {
-    display: inline-block;
-    margin: 0 8px 15px 8px;
     padding: 8px 15px;
-    font-size: 1em;
+    font-size: 0.95em;
     background-color: #2563eb;
     color: white;
     border: none;
     border-radius: 6px;
     cursor: pointer;
+    transition: background 0.2s;
   }
   button:hover {
     background-color: #1d4ed8;
   }
+
   #searchBox {
-    display: block;
-    margin: 10px auto 20px auto;
     padding: 8px;
-    width: 80%;
-    max-width: 400px;
+    width: 220px;
     border: 1px solid #9ca3af;
     border-radius: 6px;
-    font-size: 1em;
+    font-size: 0.95em;
   }
+
   table {
     width: 100%;
     border-collapse: collapse;
@@ -78,30 +80,27 @@
     font-weight: bold;
   }
 
-  /* Cell-wise status colors */
+  /* Cell highlights */
   .cell-ok {
-    background-color: #dcfce7; /* light green */
+    background-color: #dcfce7;
   }
   .cell-missing {
-    background-color: #fee2e2; /* light red */
+    background-color: #fee2e2;
   }
   .cell-outdated {
-    background-color: #fef9c3; /* light yellow */
+    background-color: #fef9c3;
   }
 
   /* Tabs */
   .tab-buttons {
     text-align: center;
-    margin-bottom: 15px;
+    margin: 15px 0;
+  }
+  .tab-button {
+    margin: 0 5px;
   }
   .tab-button.active {
     background-color: #1e40af;
-  }
-
-  /* Config bar */
-  .config-bar {
-    text-align: center;
-    margin-bottom: 15px;
   }
 
   /* Legend */
@@ -119,36 +118,28 @@
   .legend .ok { background-color: #dcfce7; }
   .legend .outdated { background-color: #fef9c3; }
   .legend .missing { background-color: #fee2e2; }
+
+  /* Hide in export */
+  .no-export {
+    display: flex;
+  }
 </style>
 
-<!-- Export libraries -->
+<!-- Libraries for export -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 <h1 id="dashboardTitle">DWR Stations Images Status</h1>
 
-<div class="config-bar">
+<div class="top-bar no-export">
+  <input type="text" id="searchBox" placeholder="🔍 Search station or state..." onkeyup="filterStations()">
   <button onclick="toggleView()">Switch to Station-Wise View</button>
-  <label for="thresholdSelect">Outdated threshold:</label>
-  <select id="thresholdSelect" onchange="loadLatest()">
-    <option value="6">6 hours</option>
-    <option value="12" selected>12 hours</option>
-    <option value="24">24 hours</option>
-    <option value="48">48 hours</option>
-  </select>
-
-  <!-- Export buttons -->
-  <button onclick="downloadAsImage()">📸 Download as Image</button>
-  <button onclick="downloadAsPDF()">📄 Download as PDF</button>
-</div>
-
-<input type="text" id="searchBox" placeholder="🔍 Search station or state..." onkeyup="filterStations()">
-
-<div class="tab-buttons">
-  <button class="tab-button active" onclick="setTab('all')">All Stations</button>
-  <button class="tab-button" onclick="setTab('updating')">Updating ✅</button>
-  <button class="tab-button" onclick="setTab('notUpdating')">Not Updating ⚠️</button>
+  <button onclick="setTab('all')">All Stations</button>
+  <button onclick="setTab('updating')">Updating ✅</button>
+  <button onclick="setTab('notUpdating')">Not Updating ⚠️</button>
+  <button onclick="downloadAsImage()">📸 Save Image</button>
+  <button onclick="downloadAsPDF()">📄 Save PDF</button>
 </div>
 
 <div id="tableContainer"></div>
@@ -156,7 +147,7 @@
 <div class="legend">
   <strong>Legend:</strong>
   <span class="ok">🟢 Updated</span>
-  <span class="outdated">🟡 Outdated</span>
+  <span class="outdated">🟡 Old Timestamp</span>
   <span class="missing">🔴 Missing</span>
 </div>
 
@@ -183,14 +174,11 @@ async function loadLatest() {
         document.getElementById('dashboardTitle').textContent =
           `DWR Stations Image Status on Mausam as on ${formattedDate}`;
       }
-    } else {
-      data = [];
-    }
+    } else data = [];
   } catch (err) {
     console.warn("Could not fetch JSON, fallback to empty data", err);
     data = [];
   }
-
   renderTables(data);
 }
 
@@ -249,7 +237,6 @@ function createTable(stations, title) {
     <tbody></tbody>
   `;
   const tbody = table.querySelector('tbody');
-  const thresholdHours = parseInt(document.getElementById('thresholdSelect').value, 10);
 
   stations.forEach(station => {
     const tr = document.createElement('tr');
@@ -271,7 +258,7 @@ function createTable(stations, title) {
       let cellClass = 'timestamp';
       if (value === 'Missing' || value.toLowerCase().includes('missing')) {
         cellClass += ' cell-missing';
-      } else if (isOutdated(value, thresholdHours)) {
+      } else if (isOld(value)) {
         cellClass += ' cell-outdated';
       } else {
         cellClass += ' cell-ok';
@@ -286,56 +273,59 @@ function createTable(stations, title) {
   return table;
 }
 
-function isOutdated(timestamp, hours) {
+// marks anything older than ~12h as old
+function isOld(timestamp) {
   const t = Date.parse(timestamp);
   if (!t) return false;
   const ageHours = (Date.now() - t) / (1000 * 60 * 60);
-  return ageHours > hours;
+  return ageHours > 12;
 }
 
 function filterStations() {
   const query = document.getElementById('searchBox').value.toLowerCase();
   const container = document.getElementById('tableContainer');
   const tables = container.querySelectorAll('table');
-
   tables.forEach(table => {
     const rows = table.querySelectorAll('tbody tr');
     let anyVisible = false;
     rows.forEach(row => {
       const text = row.textContent.toLowerCase();
-      row.style.display = text.includes(query) ? '' : 'none';
-      if (text.includes(query)) anyVisible = true;
+      if (text.includes(query)) {
+        row.style.display = '';
+        anyVisible = true;
+      } else {
+        row.style.display = 'none';
+      }
     });
     table.style.display = anyVisible ? '' : 'none';
   });
-
   const headers = container.querySelectorAll('h2');
   headers.forEach(h => {
     const table = h.nextElementSibling;
-    h.style.display = (table && table.style.display === 'none') ? 'none' : '';
+    if (table && table.style.display === 'none') h.style.display = 'none';
+    else h.style.display = '';
   });
 }
 
 function toggleView() {
   stateWise = !stateWise;
-  document.querySelector('.config-bar button').textContent = stateWise
-    ? 'Switch to Station-Wise View'
-    : 'Switch to State-Wise View';
+  document.querySelector('.top-bar button[onclick="toggleView()"]').textContent =
+    stateWise ? 'Switch to Station-Wise View' : 'Switch to State-Wise View';
   renderTables(latestData);
 }
 
 function setTab(tab) {
   currentTab = tab;
   document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-  document.querySelector(`.tab-button[onclick="setTab('${tab}')"]`).classList.add('active');
   renderTables(latestData);
 }
 
-/* Export as Image / PDF */
+/* Clean export (exclude controls) */
 async function downloadAsImage() {
-  const container = document.body;
-  const canvas = await html2canvas(container, { scale: 2 });
+  document.querySelectorAll('.no-export').forEach(el => el.style.display = 'none');
+  const canvas = await html2canvas(document.body, { scale: 3 });
   const image = canvas.toDataURL("image/png");
+  document.querySelectorAll('.no-export').forEach(el => el.style.display = '');
   const link = document.createElement("a");
   link.href = image;
   link.download = `DWR_Status_${new Date().toISOString().slice(0,19)}.png`;
@@ -343,9 +333,10 @@ async function downloadAsImage() {
 }
 
 async function downloadAsPDF() {
-  const container = document.body;
-  const canvas = await html2canvas(container, { scale: 2 });
+  document.querySelectorAll('.no-export').forEach(el => el.style.display = 'none');
+  const canvas = await html2canvas(document.body, { scale: 3 });
   const imgData = canvas.toDataURL("image/png");
+  document.querySelectorAll('.no-export').forEach(el => el.style.display = '');
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF("p", "pt", "a4");
   const imgProps = pdf.getImageProperties(imgData);
