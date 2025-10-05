@@ -13,113 +13,126 @@
   }
   h1 {
     text-align: center;
-    margin-bottom: 10px;
+    margin-bottom: 5px;
     color: #1f2937;
   }
-
-  .top-bar {
+  h2 {
+    margin-top: 25px;
+    margin-bottom: 8px;
+    color: #111827;
+    border-bottom: 2px solid #d1d5db;
+    padding-bottom: 4px;
+  }
+  .controls {
     display: flex;
-    justify-content: center;
-    align-items: center;
     flex-wrap: wrap;
+    justify-content: center;
     gap: 10px;
-    margin-bottom: 15px;
+    margin-bottom: 20px;
   }
   button {
     padding: 8px 15px;
-    font-size: 0.95em;
+    font-size: 1em;
     background-color: #2563eb;
     color: white;
     border: none;
     border-radius: 6px;
     cursor: pointer;
-    transition: background 0.2s;
   }
   button:hover {
     background-color: #1d4ed8;
   }
   #searchBox {
     padding: 8px;
-    width: 220px;
+    width: 300px;
+    max-width: 90%;
     border: 1px solid #9ca3af;
     border-radius: 6px;
-    font-size: 0.95em;
+    font-size: 1em;
   }
-
   table {
     width: 100%;
     border-collapse: collapse;
     background: #fff;
     margin-bottom: 20px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    table-layout: fixed;
+    word-wrap: break-word;
   }
   th, td {
     padding: 8px;
     border: 1px solid #e5e7eb;
     text-align: center;
+    font-size: 0.9em;
   }
   th {
     background: #e5e7eb;
     font-weight: bold;
   }
-  tr.ok-row { background-color: #d1fae5; }
-  tr.problem-row { background-color: #fee2e2; }
-
-  .timestamp { font-size: 0.85em; color: #374151; }
-  .manual-status { color: red; font-weight: bold; }
-
-  .cell-ok { background-color: #dcfce7; }
-  .cell-missing { background-color: #fee2e2; }
-  .cell-outdated { background-color: #fef9c3; }
-
-  .legend {
-    text-align: center;
-    font-size: 0.9em;
-    margin-top: 20px;
+  tr.ok-row {
+    background-color: #d1fae5; /* light green */
   }
-  .legend span {
-    display: inline-block;
-    margin: 0 8px;
-    padding: 4px 10px;
-    border-radius: 5px;
+  tr.problem-row {
+    background-color: #fee2e2; /* light red */
   }
-  .legend .ok { background-color: #dcfce7; }
-  .legend .outdated { background-color: #fef9c3; }
-  .legend .missing { background-color: #fee2e2; }
-
-  .no-export { display: flex; }
+  .timestamp {
+    font-size: 0.85em;
+    color: #374151;
+  }
+  .manual-status {
+    color: red;
+    font-weight: bold;
+  }
+  .cell-missing {
+    background-color: #fee2e2;
+    font-weight: bold;
+  }
+  .cell-outdated {
+    background-color: #fef3c7;
+  }
+  .cell-ok {
+    background-color: #d1fae5;
+  }
+  .tabs {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 15px;
+  }
+  .tab {
+    padding: 8px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    background-color: #e5e7eb;
+    font-weight: bold;
+  }
+  .tab.active {
+    background-color: #2563eb;
+    color: white;
+  }
 </style>
-
-<!-- Libraries -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 <h1 id="dashboardTitle">DWR Stations Images Status</h1>
 
-<div class="top-bar no-export">
+<div class="controls">
   <input type="text" id="searchBox" placeholder="🔍 Search station or state..." onkeyup="filterStations()">
-  <button onclick="toggleView()">Switch to Station-Wise View</button>
-  <button onclick="setTab('all')">All Stations</button>
-  <button onclick="setTab('updating')">Updating ✅</button>
-  <button onclick="setTab('notUpdating')">Not Updating ⚠️</button>
-  <button onclick="downloadAsImage()">📸 Save Image</button>
-  <button onclick="downloadAsPDF()">📄 Save PDF</button>
+  <button onclick="toggleView()" id="toggleViewBtn">Switch to Station-Wise View</button>
+  <button onclick="generateImage()">Generate Image</button>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('all')">All Stations</div>
+  <div class="tab" onclick="switchTab('updating')">Updating</div>
+  <div class="tab" onclick="switchTab('notUpdating')">Not Updating</div>
 </div>
 
 <div id="tableContainer"></div>
 
-<div class="legend">
-  <strong>Legend:</strong>
-  <span class="ok">🟢 Updated</span>
-  <span class="outdated">🟡 Old Timestamp</span>
-  <span class="missing">🔴 Missing</span>
-</div>
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
 let stateWise = true;
 let currentTab = 'all';
-let latestData = [];
 
 async function loadLatest() {
   let data;
@@ -127,7 +140,6 @@ async function loadLatest() {
     const response = await fetch('status_all_latest.json');
     if (response.ok) {
       data = await response.json();
-      latestData = data;
       const lastModified = response.headers.get('last-modified');
       if (lastModified) {
         const date = new Date(lastModified);
@@ -139,11 +151,22 @@ async function loadLatest() {
         document.getElementById('dashboardTitle').textContent =
           `DWR Stations Image Status on Mausam as on ${formattedDate}`;
       }
-    } else data = [];
-  } catch {
+    } else {
+      data = [];
+    }
+  } catch (err) {
+    console.warn("Could not fetch JSON, fallback to empty data", err);
     data = [];
   }
+
   renderTables(data);
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelector(`.tab[onclick="switchTab('${tab}')"]`).classList.add('active');
+  loadLatest();
 }
 
 function renderTables(data) {
@@ -153,6 +176,8 @@ function renderTables(data) {
   let filteredData = data;
   if (currentTab === 'updating') filteredData = data.filter(st => st.overall === '✔️');
   else if (currentTab === 'notUpdating') filteredData = data.filter(st => st.overall !== '✔️');
+
+  let slNo = 1; // continuous serial number
 
   if (stateWise) {
     const grouped = {};
@@ -167,23 +192,17 @@ function renderTables(data) {
       const stateHeader = document.createElement('h2');
       stateHeader.textContent = state;
       container.appendChild(stateHeader);
-      container.appendChild(createTable(stations));
+
+      container.appendChild(createTable(stations, slNo));
+      slNo += stations.length;
     });
   } else {
-    container.appendChild(createTable(filteredData, "All Stations"));
+    container.appendChild(createTable(filteredData, slNo));
   }
 }
 
-function createTable(stations, title) {
+function createTable(stations, startSlNo = 1) {
   const table = document.createElement('table');
-  if (title) {
-    const capRow = document.createElement('caption');
-    capRow.textContent = title;
-    capRow.style.fontWeight = "bold";
-    capRow.style.marginBottom = "5px";
-    table.appendChild(capRow);
-  }
-
   table.innerHTML = `
     <thead>
       <tr>
@@ -209,7 +228,7 @@ function createTable(stations, title) {
 
     if (station.manual_status) {
       tr.innerHTML = `
-        <td>${idx + 1}</td>
+        <td>${startSlNo + idx}</td>
         <td>${station.name} (${station.station.toUpperCase()})</td>
         <td colspan="7" class="manual-status">${station.manual_status}</td>
         <td>❌</td>
@@ -223,28 +242,21 @@ function createTable(stations, title) {
       const value = station[p] || 'Missing';
       let cellClass = 'timestamp';
       if (value === 'Missing' || value.toLowerCase().includes('missing')) cellClass += ' cell-missing';
-      else if (isOld(value)) cellClass += ' cell-outdated';
       else cellClass += ' cell-ok';
       return `<td class="${cellClass}">${value}</td>`;
     }).join('');
 
-    tr.innerHTML = `<td>${idx + 1}</td><td>${station.name} (${station.station.toUpperCase()})</td>${productCells}<td>${station.overall}</td>`;
+    tr.innerHTML = `<td>${startSlNo + idx}</td><td>${station.name} (${station.station.toUpperCase()})</td>${productCells}<td>${station.overall}</td>`;
     tbody.appendChild(tr);
   });
   return table;
-}
-
-function isOld(timestamp) {
-  const t = Date.parse(timestamp);
-  if (!t) return false;
-  const ageHours = (Date.now() - t) / (1000 * 60 * 60);
-  return ageHours > 12;
 }
 
 function filterStations() {
   const query = document.getElementById('searchBox').value.toLowerCase();
   const container = document.getElementById('tableContainer');
   const tables = container.querySelectorAll('table');
+
   tables.forEach(table => {
     const rows = table.querySelectorAll('tbody tr');
     let anyVisible = false;
@@ -253,69 +265,44 @@ function filterStations() {
       if (text.includes(query)) {
         row.style.display = '';
         anyVisible = true;
-      } else row.style.display = 'none';
+      } else {
+        row.style.display = 'none';
+      }
     });
     table.style.display = anyVisible ? '' : 'none';
   });
+
   const headers = container.querySelectorAll('h2');
   headers.forEach(h => {
     const table = h.nextElementSibling;
-    h.style.display = (table && table.style.display === 'none') ? 'none' : '';
+    if (table && table.style.display === 'none') h.style.display = 'none';
+    else h.style.display = '';
   });
 }
 
 function toggleView() {
   stateWise = !stateWise;
-  document.querySelector('.top-bar button[onclick="toggleView()"]').textContent =
-    stateWise ? 'Switch to Station-Wise View' : 'Switch to State-Wise View';
-  renderTables(latestData);
+  document.getElementById('toggleViewBtn').textContent = stateWise ? 'Switch to Station-Wise View' : 'Switch to State-Wise View';
+  loadLatest();
 }
 
-function setTab(tab) {
-  currentTab = tab;
-  renderTables(latestData);
-}
+function generateImage() {
+  const dashboard = document.getElementById('tableContainer');
+  // temporarily hide controls
+  const controls = document.querySelector('.controls');
+  const tabs = document.querySelector('.tabs');
+  controls.style.display = 'none';
+  tabs.style.display = 'none';
 
-/* Optimized Export */
-async function downloadAsImage() {
-  document.querySelectorAll('.no-export').forEach(el => el.style.display = 'none');
-  const canvas = await html2canvas(document.getElementById('tableContainer'), {
-    scale: 4,
-    useCORS: true,
-    windowWidth: document.body.scrollWidth,
-    windowHeight: document.body.scrollHeight
+  html2canvas(dashboard, { scale: 2 }).then(canvas => {
+    const link = document.createElement('a');
+    link.download = 'DWR_Status.png';
+    link.href = canvas.toDataURL();
+    link.click();
+    // restore controls
+    controls.style.display = 'flex';
+    tabs.style.display = 'flex';
   });
-  document.querySelectorAll('.no-export').forEach(el => el.style.display = '');
-  const link = document.createElement("a");
-  link.href = canvas.toDataURL("image/png");
-  link.download = `DWR_Status_${new Date().toISOString().slice(0,19)}.png`;
-  link.click();
-}
-
-async function downloadAsPDF() {
-  document.querySelectorAll('.no-export').forEach(el => el.style.display = 'none');
-  const canvas = await html2canvas(document.getElementById('tableContainer'), {
-    scale: 4,
-    useCORS: true,
-    windowWidth: document.body.scrollWidth,
-    windowHeight: document.body.scrollHeight
-  });
-  document.querySelectorAll('.no-export').forEach(el => el.style.display = '');
-
-  const { jsPDF } = window.jspdf;
-  const imgData = canvas.toDataURL("image/png");
-  const pdf = new jsPDF("p", "pt", "a4");
-  const pdfWidth = pdf.internal.pageSize.getWidth();
-  const pageHeight = pdf.internal.pageSize.getHeight();
-  const imgHeight = (canvas.height * pdfWidth) / canvas.width;
-
-  let y = 0;
-  while (y < imgHeight) {
-    pdf.addImage(imgData, "PNG", 0, -y, pdfWidth, imgHeight);
-    y += pageHeight;
-    if (y < imgHeight) pdf.addPage();
-  }
-  pdf.save(`DWR_Status_${new Date().toISOString().slice(0,19)}.pdf`);
 }
 
 loadLatest();
