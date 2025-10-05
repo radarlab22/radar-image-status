@@ -24,7 +24,8 @@
     padding-bottom: 4px;
   }
   button {
-    margin: 0 10px 15px 0;
+    display: block;
+    margin: 0 auto 15px auto;
     padding: 8px 15px;
     font-size: 1em;
     background-color: #2563eb;
@@ -37,12 +38,14 @@
     background-color: #1d4ed8;
   }
   #searchBox {
+    display: block;
+    margin: 10px auto 20px auto;
     padding: 8px;
-    width: 250px;
+    width: 80%;
+    max-width: 400px;
     border: 1px solid #9ca3af;
     border-radius: 6px;
     font-size: 1em;
-    margin-right: 10px;
   }
   table {
     width: 100%;
@@ -52,7 +55,7 @@
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
   }
   th, td {
-    padding: 6px;
+    padding: 8px;
     border: 1px solid #e5e7eb;
     text-align: center;
   }
@@ -66,10 +69,6 @@
   tr.problem-row {
     background-color: #fee2e2; /* light red */
   }
-  td.station-name {
-    color: #1e3a8a;
-    font-weight: bold;
-  }
   .timestamp {
     font-size: 0.85em;
     color: #374151;
@@ -78,31 +77,21 @@
     color: red;
     font-weight: bold;
   }
-  .highlight-cell {
-    background-color: #fca5a5; /* red-ish for outdated/missing */
-  }
 </style>
 </head>
 <body>
 <h1 id="dashboardTitle">DWR Stations Images Status</h1>
 
-<div style="text-align:center;margin-bottom:15px;">
-  <input type="text" id="searchBox" placeholder="🔍 Search station or state..." onkeyup="filterStations()">
-  <button onclick="toggleView()">Switch to Station-Wise View</button>
-  <button onclick="showTab('all')">All Stations</button>
-  <button onclick="showTab('nonUpdating')">Non-Updating</button>
-  <button onclick="showTab('updating')">Updating</button>
-</div>
+<button onclick="toggleView()">Switch to Station-Wise View</button>
+<input type="text" id="searchBox" placeholder="🔍 Search station..." onkeyup="filterStations()">
 
 <div id="tableContainer"></div>
 
 <script>
 let stateWise = true; // default view
-let currentTab = 'all'; // all / nonUpdating / updating
-const productFields = ['caz','ppi','sri','ppz','ppv','vp2','pac'];
 
 async function loadLatest() {
-  let data = [];
+  let data;
   try {
     const response = await fetch('status_all_latest.json');
     if (response.ok) {
@@ -116,11 +105,14 @@ async function loadLatest() {
           timeStyle: 'short'
         });
         document.getElementById('dashboardTitle').textContent =
-          `DWR Stations Image Status as on ${formattedDate}`;
+          `DWR Stations Image Status on Mausam as on ${formattedDate}`;
       }
+    } else {
+      data = []; // fallback
     }
-  } catch(err) {
-    console.warn("Could not fetch JSON", err);
+  } catch (err) {
+    console.warn("Could not fetch JSON, fallback to empty data", err);
+    data = [];
   }
 
   renderTables(data);
@@ -130,20 +122,10 @@ function renderTables(data) {
   const container = document.getElementById('tableContainer');
   container.innerHTML = '';
 
-  // filter based on tab
-  let filteredData = data;
-  if(currentTab === 'nonUpdating') {
-    filteredData = data.filter(st => st.manual_status || productFields.some(p => isOutdated(st[p])));
-  } else if(currentTab === 'updating') {
-    filteredData = data.filter(st => !st.manual_status && productFields.every(p => !isOutdated(st[p])));
-  }
-
-  let slNo = 1;
-
-  if(stateWise) {
+  if (stateWise) {
     // group by state
     const grouped = {};
-    filteredData.forEach(st => {
+    data.forEach(st => {
       const state = st.state || "Unknown";
       if (!grouped[state]) grouped[state] = [];
       grouped[state].push(st);
@@ -154,15 +136,16 @@ function renderTables(data) {
       const stateHeader = document.createElement('h2');
       stateHeader.textContent = state;
       container.appendChild(stateHeader);
-      container.appendChild(createTable(stations, slNo));
-      slNo += stations.length;
+
+      container.appendChild(createTable(stations));
     });
   } else {
-    container.appendChild(createTable(filteredData, slNo, "All Stations"));
+    // flat station-wise table
+    container.appendChild(createTable(data, "All Stations"));
   }
 }
 
-function createTable(stations, startSl=1, title) {
+function createTable(stations, title) {
   const table = document.createElement('table');
   if (title) {
     const capRow = document.createElement('caption');
@@ -191,43 +174,26 @@ function createTable(stations, startSl=1, title) {
   `;
   const tbody = table.querySelector('tbody');
 
-  stations.forEach((station, index) => {
+  stations.forEach(station => {
     const tr = document.createElement('tr');
-    const sl = startSl + index;
-
-    // Check overall status
-    const overallOk = !station.manual_status && productFields.every(p => !isOutdated(station[p]));
-    tr.className = overallOk ? 'ok-row' : 'problem-row';
-
-    if(station.manual_status){
+    tr.className = station.overall === '✔️' ? 'ok-row' : 'problem-row';
+    const slNo = index + 1
+    if (station.manual_status) {
       tr.innerHTML = `
-        <td class="station-name">${sl}</td>
-        <td class="station-name">${station.name} (${station.station.toUpperCase()})</td>
+        <td>${slNo}</td>
+        <td>${station.name} (${station.station.toUpperCase()})</td>
         <td colspan="7" class="manual-status">${station.manual_status}</td>
         <td>❌</td>
       `;
     } else {
-      const productCells = productFields.map(p => {
-        const val = station[p] || 'Missing';
-        const highlight = (!val || val==='Missing' || isOutdated(val)) ? 'highlight-cell' : '';
-        return `<td class="${highlight} timestamp">${val}</td>`;
-      }).join('');
-      tr.innerHTML = `<td class="station-name">${sl}</td><td class="station-name">${station.name} (${station.station.toUpperCase()})</td>${productCells}<td>${overallOk?'✔️':'❌'}</td>`;
+      const productCells = ['caz','ppi','sri','ppz','ppv','vp2','pac']
+        .map(p => `<td class="timestamp">${station[p] || 'Missing'}</td>`).join('');
+      tr.innerHTML = `<td>${station.name} (${station.station.toUpperCase()})</td>${productCells}<td>${station.overall}</td>`;
     }
-
     tbody.appendChild(tr);
   });
 
   return table;
-}
-
-function isOutdated(timestamp){
-  if(!timestamp || timestamp==='Missing') return true;
-  const now = new Date();
-  const ts = new Date(timestamp);
-  const diffMs = now - ts;
-  const diffHours = diffMs / (1000*60*60);
-  return diffHours > 1.5;
 }
 
 function filterStations() {
@@ -258,14 +224,9 @@ function filterStations() {
   });
 }
 
-function toggleView(){
+function toggleView() {
   stateWise = !stateWise;
   document.querySelector('button').textContent = stateWise ? 'Switch to Station-Wise View' : 'Switch to State-Wise View';
-  loadLatest();
-}
-
-function showTab(tab){
-  currentTab = tab;
   loadLatest();
 }
 
