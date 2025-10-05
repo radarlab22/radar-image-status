@@ -24,8 +24,8 @@
     padding-bottom: 4px;
   }
   button {
-    display: block;
-    margin: 0 auto 15px auto;
+    display: inline-block;
+    margin: 0 8px 15px 8px;
     padding: 8px 15px;
     font-size: 1em;
     background-color: #2563eb;
@@ -77,18 +77,93 @@
     color: red;
     font-weight: bold;
   }
+
+  /* Cell-wise status colors */
+  .cell-ok {
+    background-color: #dcfce7; /* light green */
+  }
+  .cell-missing {
+    background-color: #fee2e2; /* light red */
+  }
+  .cell-outdated {
+    background-color: #fef9c3; /* light yellow */
+  }
+
+  /* Tabs */
+  .tab-buttons {
+    text-align: center;
+    margin-bottom: 15px;
+  }
+  .tab-button.active {
+    background-color: #1e40af;
+  }
+
+  /* Config bar */
+  .config-bar {
+    text-align: center;
+    margin-bottom: 15px;
+  }
+
+  /* Legend */
+  .legend {
+    text-align: center;
+    font-size: 0.9em;
+    margin-top: 20px;
+  }
+  .legend span {
+    display: inline-block;
+    margin: 0 8px;
+    padding: 4px 10px;
+    border-radius: 5px;
+  }
+  .legend .ok { background-color: #dcfce7; }
+  .legend .outdated { background-color: #fef9c3; }
+  .legend .missing { background-color: #fee2e2; }
 </style>
+
+<!-- Export libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 <h1 id="dashboardTitle">DWR Stations Images Status</h1>
 
-<button onclick="toggleView()">Switch to Station-Wise View</button>
+<div class="config-bar">
+  <button onclick="toggleView()">Switch to Station-Wise View</button>
+  <label for="thresholdSelect">Outdated threshold:</label>
+  <select id="thresholdSelect" onchange="loadLatest()">
+    <option value="6">6 hours</option>
+    <option value="12" selected>12 hours</option>
+    <option value="24">24 hours</option>
+    <option value="48">48 hours</option>
+  </select>
+
+  <!-- Export buttons -->
+  <button onclick="downloadAsImage()">📸 Download as Image</button>
+  <button onclick="downloadAsPDF()">📄 Download as PDF</button>
+</div>
+
 <input type="text" id="searchBox" placeholder="🔍 Search station or state..." onkeyup="filterStations()">
+
+<div class="tab-buttons">
+  <button class="tab-button active" onclick="setTab('all')">All Stations</button>
+  <button class="tab-button" onclick="setTab('updating')">Updating ✅</button>
+  <button class="tab-button" onclick="setTab('notUpdating')">Not Updating ⚠️</button>
+</div>
 
 <div id="tableContainer"></div>
 
+<div class="legend">
+  <strong>Legend:</strong>
+  <span class="ok">🟢 Updated</span>
+  <span class="outdated">🟡 Outdated</span>
+  <span class="missing">🔴 Missing</span>
+</div>
+
 <script>
-let stateWise = true; // default view
+let stateWise = true;
+let currentTab = 'all';
+let latestData = [];
 
 async function loadLatest() {
   let data;
@@ -96,6 +171,7 @@ async function loadLatest() {
     const response = await fetch('status_all_latest.json');
     if (response.ok) {
       data = await response.json();
+      latestData = data;
       const lastModified = response.headers.get('last-modified');
       if (lastModified) {
         const date = new Date(lastModified);
@@ -108,7 +184,7 @@ async function loadLatest() {
           `DWR Stations Image Status on Mausam as on ${formattedDate}`;
       }
     } else {
-      data = []; // fallback
+      data = [];
     }
   } catch (err) {
     console.warn("Could not fetch JSON, fallback to empty data", err);
@@ -122,10 +198,13 @@ function renderTables(data) {
   const container = document.getElementById('tableContainer');
   container.innerHTML = '';
 
+  let filteredData = data;
+  if (currentTab === 'updating') filteredData = data.filter(st => st.overall === '✔️');
+  else if (currentTab === 'notUpdating') filteredData = data.filter(st => st.overall !== '✔️');
+
   if (stateWise) {
-    // group by state
     const grouped = {};
-    data.forEach(st => {
+    filteredData.forEach(st => {
       const state = st.state || "Unknown";
       if (!grouped[state]) grouped[state] = [];
       grouped[state].push(st);
@@ -136,12 +215,10 @@ function renderTables(data) {
       const stateHeader = document.createElement('h2');
       stateHeader.textContent = state;
       container.appendChild(stateHeader);
-
       container.appendChild(createTable(stations));
     });
   } else {
-    // flat station-wise table
-    container.appendChild(createTable(data, "All Stations"));
+    container.appendChild(createTable(filteredData, "All Stations"));
   }
 }
 
@@ -172,6 +249,7 @@ function createTable(stations, title) {
     <tbody></tbody>
   `;
   const tbody = table.querySelector('tbody');
+  const thresholdHours = parseInt(document.getElementById('thresholdSelect').value, 10);
 
   stations.forEach(station => {
     const tr = document.createElement('tr');
@@ -183,15 +261,36 @@ function createTable(stations, title) {
         <td colspan="7" class="manual-status">${station.manual_status}</td>
         <td>❌</td>
       `;
-    } else {
-      const productCells = ['caz','ppi','sri','ppz','ppv','vp2','pac']
-        .map(p => `<td class="timestamp">${station[p] || 'Missing'}</td>`).join('');
-      tr.innerHTML = `<td>${station.name} (${station.station.toUpperCase()})</td>${productCells}<td>${station.overall}</td>`;
+      tbody.appendChild(tr);
+      return;
     }
+
+    const productKeys = ['caz','ppi','sri','ppz','ppv','vp2','pac'];
+    const productCells = productKeys.map(p => {
+      const value = station[p] || 'Missing';
+      let cellClass = 'timestamp';
+      if (value === 'Missing' || value.toLowerCase().includes('missing')) {
+        cellClass += ' cell-missing';
+      } else if (isOutdated(value, thresholdHours)) {
+        cellClass += ' cell-outdated';
+      } else {
+        cellClass += ' cell-ok';
+      }
+      return `<td class="${cellClass}">${value}</td>`;
+    }).join('');
+
+    tr.innerHTML = `<td>${station.name} (${station.station.toUpperCase()})</td>${productCells}<td>${station.overall}</td>`;
     tbody.appendChild(tr);
   });
 
   return table;
+}
+
+function isOutdated(timestamp, hours) {
+  const t = Date.parse(timestamp);
+  if (!t) return false;
+  const ageHours = (Date.now() - t) / (1000 * 60 * 60);
+  return ageHours > hours;
 }
 
 function filterStations() {
@@ -204,12 +303,8 @@ function filterStations() {
     let anyVisible = false;
     rows.forEach(row => {
       const text = row.textContent.toLowerCase();
-      if (text.includes(query)) {
-        row.style.display = '';
-        anyVisible = true;
-      } else {
-        row.style.display = 'none';
-      }
+      row.style.display = text.includes(query) ? '' : 'none';
+      if (text.includes(query)) anyVisible = true;
     });
     table.style.display = anyVisible ? '' : 'none';
   });
@@ -217,15 +312,47 @@ function filterStations() {
   const headers = container.querySelectorAll('h2');
   headers.forEach(h => {
     const table = h.nextElementSibling;
-    if (table && table.style.display === 'none') h.style.display = 'none';
-    else h.style.display = '';
+    h.style.display = (table && table.style.display === 'none') ? 'none' : '';
   });
 }
 
 function toggleView() {
   stateWise = !stateWise;
-  document.querySelector('button').textContent = stateWise ? 'Switch to Station-Wise View' : 'Switch to State-Wise View';
-  loadLatest();
+  document.querySelector('.config-bar button').textContent = stateWise
+    ? 'Switch to Station-Wise View'
+    : 'Switch to State-Wise View';
+  renderTables(latestData);
+}
+
+function setTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+  document.querySelector(`.tab-button[onclick="setTab('${tab}')"]`).classList.add('active');
+  renderTables(latestData);
+}
+
+/* Export as Image / PDF */
+async function downloadAsImage() {
+  const container = document.body;
+  const canvas = await html2canvas(container, { scale: 2 });
+  const image = canvas.toDataURL("image/png");
+  const link = document.createElement("a");
+  link.href = image;
+  link.download = `DWR_Status_${new Date().toISOString().slice(0,19)}.png`;
+  link.click();
+}
+
+async function downloadAsPDF() {
+  const container = document.body;
+  const canvas = await html2canvas(container, { scale: 2 });
+  const imgData = canvas.toDataURL("image/png");
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF("p", "pt", "a4");
+  const imgProps = pdf.getImageProperties(imgData);
+  const pdfWidth = pdf.internal.pageSize.getWidth();
+  const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+  pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+  pdf.save(`DWR_Status_${new Date().toISOString().slice(0,19)}.pdf`);
 }
 
 loadLatest();
