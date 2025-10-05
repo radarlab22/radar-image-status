@@ -174,24 +174,27 @@ function createTable(stations, title) {
   `;
   const tbody = table.querySelector('tbody');
 
-  stations.forEach(station => {
-    const tr = document.createElement('tr');
-    tr.className = station.overall === '✔️' ? 'ok-row' : 'problem-row';
-    const slNo = index + 1
-    if (station.manual_status) {
-      tr.innerHTML = `
-        <td>${slNo}</td>
-        <td>${station.name} (${station.station.toUpperCase()})</td>
-        <td colspan="7" class="manual-status">${station.manual_status}</td>
-        <td>❌</td>
-      `;
-    } else {
-      const productCells = ['caz','ppi','sri','ppz','ppv','vp2','pac']
-        .map(p => `<td class="timestamp">${station[p] || 'Missing'}</td>`).join('');
-      tr.innerHTML = `<td>${station.name} (${station.station.toUpperCase()})</td>${productCells}<td>${station.overall}</td>`;
-    }
-    tbody.appendChild(tr);
-  });
+  stations.forEach((station, index) => {
+  const tr = document.createElement('tr');
+  tr.className = station.overall === '✔️' ? 'ok-row' : 'problem-row';
+  const slNo = index + 1;
+
+  if (station.manual_status) {
+    tr.innerHTML = `
+      <td>${slNo}</td>
+      <td>${station.name} (${station.station.toUpperCase()})</td>
+      <td colspan="7" class="manual-status">${station.manual_status}</td>
+      <td>❌</td>
+    `;
+  } else {
+    const productCells = ['caz','ppi','sri','ppz','ppv','vp2','pac']
+      .map(p => `<td class="timestamp">${station[p] || 'Missing'}</td>`).join('');
+    tr.innerHTML = `<td>${slNo}</td><td>${station.name} (${station.station.toUpperCase()})</td>${productCells}<td>${station.overall}</td>`;
+  }
+
+  tbody.appendChild(tr);
+});
+
 
   return table;
 }
