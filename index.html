@@ -5,108 +5,30 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DWR Stations Images Status</title>
 <style>
-  body {
-    font-family: Arial, sans-serif;
-    margin: 20px;
-    background: #f3f4f6;
-    color: #111;
-  }
-  h1 {
-    text-align: center;
-    margin-bottom: 5px;
-    color: #1f2937;
-  }
-  h2 {
-    margin-top: 25px;
-    margin-bottom: 8px;
-    color: #111827;
-    border-bottom: 2px solid #d1d5db;
-    padding-bottom: 4px;
-  }
-  .controls {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 10px;
-    margin-bottom: 20px;
-  }
-  button {
-    padding: 8px 15px;
-    font-size: 1em;
-    background-color: #2563eb;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-  }
-  button:hover {
-    background-color: #1d4ed8;
-  }
-  #searchBox {
-    padding: 8px;
-    width: 300px;
-    max-width: 90%;
-    border: 1px solid #9ca3af;
-    border-radius: 6px;
-    font-size: 1em;
-  }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    background: #fff;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    table-layout: fixed;
-    word-wrap: break-word;
-  }
-  th, td {
-    padding: 8px;
-    border: 1px solid #e5e7eb;
-    text-align: center;
-    font-size: 0.9em;
-  }
-  th {
-    background: #e5e7eb;
-    font-weight: bold;
-  }
-  .timestamp {
-    font-size: 0.85em;
-    color: #374151;
-  }
-  .cell-missing {
-    background-color: #fee2e2;
-    font-weight: bold;
-  }
-  .cell-invalid {
-    background-color: #fef3c7;
-  }
-  .cell-ok {
-    background-color: #d1fae5;
-  }
-  .tabs {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin-bottom: 15px;
-  }
-  .tab {
-    padding: 8px 15px;
-    border-radius: 6px;
-    cursor: pointer;
-    background-color: #e5e7eb;
-    font-weight: bold;
-  }
-  .tab.active {
-    background-color: #2563eb;
-    color: white;
-  }
+  body { font-family: Arial, sans-serif; margin: 20px; background: #f3f4f6; color: #111; }
+  h1 { text-align: center; margin-bottom: 5px; color: #1f2937; }
+  h2 { margin-top: 25px; margin-bottom: 8px; color: #111827; border-bottom: 2px solid #d1d5db; padding-bottom: 4px; }
+  .controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 20px; }
+  button { padding: 8px 15px; font-size: 1em; background-color: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; }
+  button:hover { background-color: #1d4ed8; }
+  #searchBox { padding: 8px; width: 300px; max-width: 90%; border: 1px solid #9ca3af; border-radius: 6px; font-size: 1em; }
+  table { width: 100%; border-collapse: collapse; background: #fff; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); table-layout: fixed; word-wrap: break-word; }
+  th, td { padding: 8px; border: 1px solid #e5e7eb; text-align: center; font-size: 0.9em; }
+  th { background: #e5e7eb; font-weight: bold; }
+  .timestamp { font-size: 0.85em; color: #374151; }
+  .cell-missing { background-color: #fee2e2; font-weight: bold; color: #b91c1c; }
+  .cell-invalid { background-color: #fef3c7; color: #78350f; font-weight: bold; }
+  .cell-ok { background-color: #d1fae5; color: #065f46; }
+  .tabs { display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; }
+  .tab { padding: 8px 15px; border-radius: 6px; cursor: pointer; background-color: #e5e7eb; font-weight: bold; }
+  .tab.active { background-color: #2563eb; color: white; }
 </style>
 </head>
 <body>
 <h1 id="dashboardTitle">DWR Stations Images Status</h1>
 
 <div class="controls">
-  <input type="text" id="searchBox" placeholder="🔍 Search station..." onkeyup="filterStations()">
+  <input type="text" id="searchBox" placeholder="🔍 Search station or state..." onkeyup="filterStations()">
   <button onclick="toggleView()" id="toggleViewBtn">Switch to Station-Wise View</button>
 </div>
 
@@ -123,31 +45,44 @@ let stateWise = true;
 let currentTab = 'all';
 
 async function loadLatest() {
-  let data;
+  let dataMain = [];
+  let dataOverride = [];
   try {
-    const response = await fetch('status_all_latest.json');
-    if (response.ok) {
-      data = await response.json();
-      const lastModified = response.headers.get('last-modified');
-      if (lastModified) {
-        const date = new Date(lastModified);
-        const formattedDate = date.toLocaleString('en-IN', {
-          timeZone: 'Asia/Kolkata',
-          dateStyle: 'long',
-          timeStyle: 'short'
-        });
-        document.getElementById('dashboardTitle').textContent =
-          `DWR Stations Image Status on Mausam as on ${formattedDate}`;
-      }
-    } else {
-      data = [];
+    const [resMain, resOverride] = await Promise.all([
+      fetch('status_all_latest.json'),
+      fetch('station_override.json')
+    ]);
+
+    if (resMain.ok) dataMain = await resMain.json();
+    if (resOverride.ok) dataOverride = await resOverride.json();
+
+    // Merge override data
+    const overrideMap = {};
+    dataOverride.forEach(st => overrideMap[st.station] = st);
+    dataMain = dataMain.map(st => overrideMap[st.station] ? {...st, ...overrideMap[st.station]} : st);
+
+    // Optional: Include override-only stations
+    dataOverride.forEach(st => {
+      if (!dataMain.find(s => s.station === st.station)) dataMain.push(st);
+    });
+
+    // Update dashboard title with timestamp
+    const lastModified = resMain.headers.get('last-modified');
+    if (lastModified) {
+      const date = new Date(lastModified);
+      const formattedDate = date.toLocaleString('en-IN', {
+        timeZone: 'Asia/Kolkata',
+        dateStyle: 'long',
+        timeStyle: 'short'
+      });
+      document.getElementById('dashboardTitle').textContent =
+        `DWR Stations Image Status on Mausam as on ${formattedDate}`;
     }
-  } catch (err) {
+  } catch(err) {
     console.warn("Could not fetch JSON, fallback to empty data", err);
-    data = [];
   }
 
-  renderTables(data);
+  renderTables(dataMain);
 }
 
 function switchTab(tab) {
@@ -165,7 +100,7 @@ function renderTables(data) {
   if (currentTab === 'updating') filteredData = data.filter(st => st.overall === '✔️');
   else if (currentTab === 'notUpdating') filteredData = data.filter(st => st.overall !== '✔️');
 
-  let slNo = 1; // continuous serial number
+  let slNo = 1;
 
   if (stateWise) {
     const grouped = {};
@@ -204,25 +139,28 @@ function createTable(stations, startSlNo = 1) {
         <th>VP2</th>
         <th>PAC</th>
         <th>Overall</th>
+        <th>Remarks</th>
       </tr>
     </thead>
     <tbody></tbody>
   `;
   const tbody = table.querySelector('tbody');
+  const productKeys = ['caz','ppi','sri','ppz','ppv','vp2','pac'];
 
   stations.forEach((station, idx) => {
     const tr = document.createElement('tr');
-    const productKeys = ['caz','ppi','sri','ppz','ppv','vp2','pac'];
 
     const productCells = productKeys.map(p => {
       const value = station[p] || 'Missing';
-      let cellClass = 'timestamp cell-ok';
-      if (value === 'Missing' || value.toLowerCase().includes('missing')) cellClass = 'cell-missing';
+      let cellClass = 'cell-ok';
+      if (value.toLowerCase().includes('missing')) cellClass = 'cell-missing';
       else if (value.toLowerCase().includes('invalid') || value.toLowerCase().includes('outdated')) cellClass = 'cell-invalid';
       return `<td class="${cellClass}">${value}</td>`;
     }).join('');
 
-    tr.innerHTML = `<td>${startSlNo + idx}</td><td>${station.name} (${station.station.toUpperCase()})</td>${productCells}<td>${station.overall}</td>`;
+    const remarks = station.remarks || '';
+
+    tr.innerHTML = `<td>${startSlNo + idx}</td><td>${station.name} (${station.station.toUpperCase()})</td>${productCells}<td>${station.overall}</td><td>${remarks}</td>`;
     tbody.appendChild(tr);
   });
   return table;
