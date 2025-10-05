@@ -69,25 +69,15 @@
     background: #e5e7eb;
     font-weight: bold;
   }
-  tr.ok-row {
-    background-color: #d1fae5; /* light green */
-  }
-  tr.problem-row {
-    background-color: #fee2e2; /* light red */
-  }
   .timestamp {
     font-size: 0.85em;
     color: #374151;
-  }
-  .manual-status {
-    color: red;
-    font-weight: bold;
   }
   .cell-missing {
     background-color: #fee2e2;
     font-weight: bold;
   }
-  .cell-outdated {
+  .cell-invalid {
     background-color: #fef3c7;
   }
   .cell-ok {
@@ -116,9 +106,8 @@
 <h1 id="dashboardTitle">DWR Stations Images Status</h1>
 
 <div class="controls">
-  <input type="text" id="searchBox" placeholder="🔍 Search station or state..." onkeyup="filterStations()">
+  <input type="text" id="searchBox" placeholder="🔍 Search station..." onkeyup="filterStations()">
   <button onclick="toggleView()" id="toggleViewBtn">Switch to Station-Wise View</button>
-  <button onclick="generateImage()">Generate Image</button>
 </div>
 
 <div class="tabs">
@@ -129,7 +118,6 @@
 
 <div id="tableContainer"></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
 let stateWise = true;
 let currentTab = 'all';
@@ -224,25 +212,13 @@ function createTable(stations, startSlNo = 1) {
 
   stations.forEach((station, idx) => {
     const tr = document.createElement('tr');
-    tr.className = station.overall === '✔️' ? 'ok-row' : 'problem-row';
-
-    if (station.manual_status) {
-      tr.innerHTML = `
-        <td>${startSlNo + idx}</td>
-        <td>${station.name} (${station.station.toUpperCase()})</td>
-        <td colspan="7" class="manual-status">${station.manual_status}</td>
-        <td>❌</td>
-      `;
-      tbody.appendChild(tr);
-      return;
-    }
-
     const productKeys = ['caz','ppi','sri','ppz','ppv','vp2','pac'];
+
     const productCells = productKeys.map(p => {
       const value = station[p] || 'Missing';
-      let cellClass = 'timestamp';
-      if (value === 'Missing' || value.toLowerCase().includes('missing')) cellClass += ' cell-missing';
-      else cellClass += ' cell-ok';
+      let cellClass = 'timestamp cell-ok';
+      if (value === 'Missing' || value.toLowerCase().includes('missing')) cellClass = 'cell-missing';
+      else if (value.toLowerCase().includes('invalid') || value.toLowerCase().includes('outdated')) cellClass = 'cell-invalid';
       return `<td class="${cellClass}">${value}</td>`;
     }).join('');
 
@@ -284,25 +260,6 @@ function toggleView() {
   stateWise = !stateWise;
   document.getElementById('toggleViewBtn').textContent = stateWise ? 'Switch to Station-Wise View' : 'Switch to State-Wise View';
   loadLatest();
-}
-
-function generateImage() {
-  const dashboard = document.getElementById('tableContainer');
-  // temporarily hide controls
-  const controls = document.querySelector('.controls');
-  const tabs = document.querySelector('.tabs');
-  controls.style.display = 'none';
-  tabs.style.display = 'none';
-
-  html2canvas(dashboard, { scale: 2 }).then(canvas => {
-    const link = document.createElement('a');
-    link.download = 'DWR_Status.png';
-    link.href = canvas.toDataURL();
-    link.click();
-    // restore controls
-    controls.style.display = 'flex';
-    tabs.style.display = 'flex';
-  });
 }
 
 loadLatest();
