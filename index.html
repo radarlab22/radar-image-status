@@ -17,7 +17,6 @@
     color: #1f2937;
   }
 
-  /* Top control bar */
   .top-bar {
     display: flex;
     justify-content: center;
@@ -26,7 +25,6 @@
     gap: 10px;
     margin-bottom: 15px;
   }
-
   button {
     padding: 8px 15px;
     font-size: 0.95em;
@@ -40,7 +38,6 @@
   button:hover {
     background-color: #1d4ed8;
   }
-
   #searchBox {
     padding: 8px;
     width: 220px;
@@ -65,45 +62,16 @@
     background: #e5e7eb;
     font-weight: bold;
   }
-  tr.ok-row {
-    background-color: #d1fae5; /* light green */
-  }
-  tr.problem-row {
-    background-color: #fee2e2; /* light red */
-  }
-  .timestamp {
-    font-size: 0.85em;
-    color: #374151;
-  }
-  .manual-status {
-    color: red;
-    font-weight: bold;
-  }
+  tr.ok-row { background-color: #d1fae5; }
+  tr.problem-row { background-color: #fee2e2; }
 
-  /* Cell highlights */
-  .cell-ok {
-    background-color: #dcfce7;
-  }
-  .cell-missing {
-    background-color: #fee2e2;
-  }
-  .cell-outdated {
-    background-color: #fef9c3;
-  }
+  .timestamp { font-size: 0.85em; color: #374151; }
+  .manual-status { color: red; font-weight: bold; }
 
-  /* Tabs */
-  .tab-buttons {
-    text-align: center;
-    margin: 15px 0;
-  }
-  .tab-button {
-    margin: 0 5px;
-  }
-  .tab-button.active {
-    background-color: #1e40af;
-  }
+  .cell-ok { background-color: #dcfce7; }
+  .cell-missing { background-color: #fee2e2; }
+  .cell-outdated { background-color: #fef9c3; }
 
-  /* Legend */
   .legend {
     text-align: center;
     font-size: 0.9em;
@@ -119,13 +87,10 @@
   .legend .outdated { background-color: #fef9c3; }
   .legend .missing { background-color: #fee2e2; }
 
-  /* Hide in export */
-  .no-export {
-    display: flex;
-  }
+  .no-export { display: flex; }
 </style>
 
-<!-- Libraries for export -->
+<!-- Libraries -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
@@ -175,8 +140,7 @@ async function loadLatest() {
           `DWR Stations Image Status on Mausam as on ${formattedDate}`;
       }
     } else data = [];
-  } catch (err) {
-    console.warn("Could not fetch JSON, fallback to empty data", err);
+  } catch {
     data = [];
   }
   renderTables(data);
@@ -223,6 +187,7 @@ function createTable(stations, title) {
   table.innerHTML = `
     <thead>
       <tr>
+        <th>Sl. No.</th>
         <th>Station</th>
         <th>CAZ</th>
         <th>PPI</th>
@@ -238,12 +203,13 @@ function createTable(stations, title) {
   `;
   const tbody = table.querySelector('tbody');
 
-  stations.forEach(station => {
+  stations.forEach((station, idx) => {
     const tr = document.createElement('tr');
     tr.className = station.overall === '✔️' ? 'ok-row' : 'problem-row';
 
     if (station.manual_status) {
       tr.innerHTML = `
+        <td>${idx + 1}</td>
         <td>${station.name} (${station.station.toUpperCase()})</td>
         <td colspan="7" class="manual-status">${station.manual_status}</td>
         <td>❌</td>
@@ -256,24 +222,18 @@ function createTable(stations, title) {
     const productCells = productKeys.map(p => {
       const value = station[p] || 'Missing';
       let cellClass = 'timestamp';
-      if (value === 'Missing' || value.toLowerCase().includes('missing')) {
-        cellClass += ' cell-missing';
-      } else if (isOld(value)) {
-        cellClass += ' cell-outdated';
-      } else {
-        cellClass += ' cell-ok';
-      }
+      if (value === 'Missing' || value.toLowerCase().includes('missing')) cellClass += ' cell-missing';
+      else if (isOld(value)) cellClass += ' cell-outdated';
+      else cellClass += ' cell-ok';
       return `<td class="${cellClass}">${value}</td>`;
     }).join('');
 
-    tr.innerHTML = `<td>${station.name} (${station.station.toUpperCase()})</td>${productCells}<td>${station.overall}</td>`;
+    tr.innerHTML = `<td>${idx + 1}</td><td>${station.name} (${station.station.toUpperCase()})</td>${productCells}<td>${station.overall}</td>`;
     tbody.appendChild(tr);
   });
-
   return table;
 }
 
-// marks anything older than ~12h as old
 function isOld(timestamp) {
   const t = Date.parse(timestamp);
   if (!t) return false;
@@ -293,17 +253,14 @@ function filterStations() {
       if (text.includes(query)) {
         row.style.display = '';
         anyVisible = true;
-      } else {
-        row.style.display = 'none';
-      }
+      } else row.style.display = 'none';
     });
     table.style.display = anyVisible ? '' : 'none';
   });
   const headers = container.querySelectorAll('h2');
   headers.forEach(h => {
     const table = h.nextElementSibling;
-    if (table && table.style.display === 'none') h.style.display = 'none';
-    else h.style.display = '';
+    h.style.display = (table && table.style.display === 'none') ? 'none' : '';
   });
 }
 
@@ -316,33 +273,48 @@ function toggleView() {
 
 function setTab(tab) {
   currentTab = tab;
-  document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
   renderTables(latestData);
 }
 
-/* Clean export (exclude controls) */
+/* Optimized Export */
 async function downloadAsImage() {
   document.querySelectorAll('.no-export').forEach(el => el.style.display = 'none');
-  const canvas = await html2canvas(document.body, { scale: 3 });
-  const image = canvas.toDataURL("image/png");
+  const canvas = await html2canvas(document.getElementById('tableContainer'), {
+    scale: 4,
+    useCORS: true,
+    windowWidth: document.body.scrollWidth,
+    windowHeight: document.body.scrollHeight
+  });
   document.querySelectorAll('.no-export').forEach(el => el.style.display = '');
   const link = document.createElement("a");
-  link.href = image;
+  link.href = canvas.toDataURL("image/png");
   link.download = `DWR_Status_${new Date().toISOString().slice(0,19)}.png`;
   link.click();
 }
 
 async function downloadAsPDF() {
   document.querySelectorAll('.no-export').forEach(el => el.style.display = 'none');
-  const canvas = await html2canvas(document.body, { scale: 3 });
-  const imgData = canvas.toDataURL("image/png");
+  const canvas = await html2canvas(document.getElementById('tableContainer'), {
+    scale: 4,
+    useCORS: true,
+    windowWidth: document.body.scrollWidth,
+    windowHeight: document.body.scrollHeight
+  });
   document.querySelectorAll('.no-export').forEach(el => el.style.display = '');
+
   const { jsPDF } = window.jspdf;
+  const imgData = canvas.toDataURL("image/png");
   const pdf = new jsPDF("p", "pt", "a4");
-  const imgProps = pdf.getImageProperties(imgData);
   const pdfWidth = pdf.internal.pageSize.getWidth();
-  const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-  pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+  const pageHeight = pdf.internal.pageSize.getHeight();
+  const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+
+  let y = 0;
+  while (y < imgHeight) {
+    pdf.addImage(imgData, "PNG", 0, -y, pdfWidth, imgHeight);
+    y += pageHeight;
+    if (y < imgHeight) pdf.addPage();
+  }
   pdf.save(`DWR_Status_${new Date().toISOString().slice(0,19)}.pdf`);
 }
 
