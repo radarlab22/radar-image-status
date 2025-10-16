@@ -149,14 +149,16 @@ def get_all_product_status(stations, products, thresholds, overrides):
                 continue  # Skip fetching products
 
             all_ok = True
+            any_ok = False
             for product in products:
                 threshold = thresholds.get(product, 30)
                 ts, ok = fetch_product_time(s, product, threshold, session)
                 row[product] = ts
-                if product != "pac" and not ok:
+                if product != "pac" and ok:
                     all_ok = False
+                    any_ok = True
 
-            row["overall"] = "✔️" if all_ok else "❌"
+            row["overall"] = "✔️" if any_ok else "❌"
             final_data.append(row)
 
     return final_data
