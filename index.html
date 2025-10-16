@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>DWR Stations Images Status</title>
   <style>
     body {
@@ -23,9 +23,38 @@
       border-bottom: 2px solid #d1d5db;
       padding-bottom: 4px;
     }
+    .legend {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 0.95em;
+      color: #374151;
+    }
+    .legend span {
+      display: inline-block;
+      margin: 0 10px;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+    .legend .ok-cell {
+      background-color: #d1fae5; /* green */
+      color: #065f46;
+    }
+    .legend .missing-cell {
+      background-color: #fbbf24; /* orange */
+      color: #92400e;
+    }
+    .legend .invalid-cell {
+      background-color: #fee2e2; /* pink */
+      color: #991b1b;
+    }
+    .legend .manual-status {
+      background-color: #f87171; /* red */
+      color: #7f1d1d;
+    }
     button {
       display: block;
-      margin: 0 auto 15px auto;
+      margin: 0 auto 10px auto;
       padding: 8px 15px;
       font-size: 1em;
       background-color: #2563eb;
@@ -68,24 +97,48 @@
       color: #374151;
     }
     .manual-status {
-      color: red;
+      color: #7f1d1d;
       font-weight: bold;
+      background-color: #f87171; /* red */
     }
-    .problem-cell {
-      background-color: #fee2e2; /* light red */
+    .ok-cell {
+      background-color: #d1fae5; /* green */
+    }
+    .missing-cell {
+      background-color: #fbbf24; /* orange */
+    }
+    .invalid-cell {
+      background-color: #fee2e2; /* pink */
     }
   </style>
 </head>
 <body>
   <h1 id="dashboardTitle">DWR Stations Images Status</h1>
 
+  <div class="legend">
+    <span class="ok-cell">✔️ Up-to-date</span>
+    <span class="missing-cell">⚠️ Missing timestamp</span>
+    <span class="invalid-cell">❌ Outdated or invalid</span>
+    <span class="manual-status">🛑 Manual override</span>
+  </div>
+
   <button onclick="toggleView()">Switch to Station-Wise View</button>
-  <input type="text" id="searchBox" placeholder="🔍 Search station..." onkeyup="filterStations()">
+  <input type="text" id="searchBox" placeholder="🔍 Search station..." onkeyup="filterStations()" />
 
   <div id="tableContainer"></div>
 
   <script>
     let stateWise = true;
+
+    const PRODUCT_THRESHOLDS = {
+      "caz": 90,
+      "ppi": 90,
+      "sri": 90,
+      "ppz": 90,
+      "ppv": 90,
+      "vp2": 90,
+      "pac": 1440
+    };
 
     async function loadLatest() {
       let data;
@@ -118,7 +171,6 @@
     function renderTables(data) {
       const container = document.getElementById('tableContainer');
       container.innerHTML = '';
-
       let globalSlNo = 0;
 
       if (stateWise) {
@@ -134,7 +186,6 @@
           const stateHeader = document.createElement('h2');
           stateHeader.textContent = state;
           container.appendChild(stateHeader);
-
           globalSlNo = createTable(stations, container, globalSlNo);
         });
       } else {
@@ -144,7 +195,6 @@
 
     function createTable(stations, container, slCounter) {
       const table = document.createElement('table');
-
       table.innerHTML = `
         <thead>
           <tr>
@@ -174,15 +224,38 @@
             <td>${slCounter}</td>
             <td>${station.name} (${station.station.toUpperCase()})</td>
             <td colspan="7" class="manual-status">${station.manual_status}</td>
-            <td>❌</td>
+            <td>🛑</td>
           `;
+          tr.classList.add('manual-status');
         } else {
-          const productCells = ['caz','ppi','sri','ppz','ppv','vp2','pac']
-            .map(p => {
-              const ts = station[p] || 'Missing';
-              const isProblem = ts === 'Missing' || ts === 'Invalid';
-              return `<td class="timestamp ${isProblem ? 'problem-cell' : ''}">${ts}</td>`;
-            }).join('');
+          // Determine overall row color only if no manual_status:
+          tr.className = station.overall === '✔️' ? 'ok-cell' : '';
+
+          const productCells = ['caz','ppi','sri','ppz','ppv','vp2','pac'].map(p => {
+            const ts = station[p];
+            let cellClass = '';
+            let displayText = ts || '';
+
+            if (!ts || ts === 'Missing') {
+              cellClass = 'missing-cell'; // orange for missing
+              displayText = 'Missing';
+            } else {
+              const dt = parseKolkataTime(ts);
+              if (!dt || isNaN(dt.getTime())) {
+                cellClass = 'invalid-cell'; // pink for invalid timestamp
+                displayText = ts + ' (Invalid)';
+              } else {
+                const diffMins = (Date.now() - dt.getTime()) / 60000;
+                const threshold = PRODUCT_THRESHOLDS[p] || 90;
+                if (diffMins > threshold) {
+                  cellClass = 'invalid-cell'; // pink for outdated
+                } else {
+                  cellClass = 'ok-cell'; // green for up-to-date
+                }
+              }
+            }
+            return `<td class="timestamp ${cellClass}">${displayText}</td>`;
+          }).join('');
 
           tr.innerHTML = `
             <td>${slCounter}</td>
@@ -197,6 +270,36 @@
 
       container.appendChild(table);
       return slCounter;
+    }
+
+    function parseKolkataTime(str) {
+      // Assuming str format: "YYYY-MM-DD HH:mm:ss"
+      // Create Date object in Asia/Kolkata timezone
+      
+      // Since JS Date does not support timezones well, treat string as local Kolkata time
+      // We'll parse components manually and create Date in UTC offset +5:30
+
+      if (!str) return null;
+
+      // Split date and time
+      const [datePart, timePart] = str.trim().split(' ');
+      if (!datePart || !timePart) return null;
+
+      const [year, month, day] = datePart.split('-').map(Number);
+      const [hours, minutes, seconds] = timePart.split(':').map(Number);
+
+      if ([year, month, day, hours, minutes, seconds].some(isNaN)) return null;
+
+      // Create a Date object in UTC:
+      // Kolkata is UTC+5:30, so subtract 5:30 to get UTC time
+      // e.g. local Kolkata time = UTC + 5h30m
+      // So to get UTC from Kolkata, subtract 5:30 from time
+
+      const utcDate = new Date(Date.UTC(year, month - 1, day, hours, minutes, seconds));
+      // Subtract 5 hours 30 mins to convert Kolkata -> UTC
+      utcDate.setMinutes(utcDate.getMinutes() - 330);
+
+      return utcDate;
     }
 
     function filterStations() {
