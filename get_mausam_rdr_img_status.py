@@ -159,6 +159,10 @@ def get_all_product_status(stations, products, thresholds, overrides):
                     any_ok = True
 
             row["overall"] = "✔️" if any_ok else "❌"
+            if s == "kol" and row["overall"] == "❌":
+                row["overall"] = "✔️: Stand By Mode"
+                final_data.append(row)
+                continue
             final_data.append(row)
 
     return final_data
