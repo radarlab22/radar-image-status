@@ -40,13 +40,13 @@
       background-color: #d1fae5; /* green */
       color: #065f46;
     }
-    .legend .missing-cell {
+    .legend .missing-invalid-cell {
       background-color: #fbbf24; /* orange */
       color: #92400e;
     }
-    .legend .invalid-cell {
-      background-color: #fee2e2; /* pink */
-      color: #991b1b;
+    .legend .outdated-cell {
+      background-color: #fde68a; /* yellow */
+      color: #92400e;
     }
     .legend .manual-status {
       background-color: #f87171; /* red */
@@ -104,11 +104,16 @@
     .ok-cell {
       background-color: #d1fae5; /* green */
     }
-    .missing-cell {
+    .missing-invalid-cell {
       background-color: #fbbf24; /* orange */
     }
-    .invalid-cell {
-      background-color: #fee2e2; /* pink */
+    .outdated-cell {
+      background-color: #fde68a; /* yellow */
+    }
+    .cross-overall {
+      background-color: #fde68a; /* yellow */
+      color: white !important;
+      font-weight: bold;
     }
   </style>
 </head>
@@ -117,8 +122,8 @@
 
   <div class="legend">
     <span class="ok-cell">✔️ Up-to-date</span>
-    <span class="missing-cell">⚠️ Missing timestamp</span>
-    <span class="invalid-cell">❌ Outdated or invalid</span>
+    <span class="missing-invalid-cell">⚠️ Missing / Invalid timestamp</span>
+    <span class="outdated-cell">❌ Outdated</span>
     <span class="manual-status">🛑 Manual override</span>
   </div>
 
@@ -228,27 +233,51 @@
           `;
           tr.classList.add('manual-status');
         } else {
-          // Determine overall row color only if no manual_status:
-          tr.className = station.overall === '✔️' ? 'ok-cell' : '';
+          // Overall cell class:
+          let overallClass = '';
+          let overallText = station.overall || '';
 
+          // If station.cross true => override overall cell style
+          // Assume station.cross is boolean flag. Adjust if your data differs.
+          if (station.cross) {
+            overallClass = 'cross-overall'; // white text + outdated background
+          } else {
+            // Determine overall class based on overall symbol:
+            // ✔️ -> ok-cell
+            // ⚠️ Missing or Invalid -> missing-invalid-cell
+            // ❌ Outdated -> outdated-cell
+
+            // Since station.overall is a symbol like '✔️', '⚠️', '❌', handle accordingly:
+            if (overallText === '✔️') {
+              overallClass = 'ok-cell';
+            } else if (overallText === '⚠️') {
+              overallClass = 'missing-invalid-cell';
+            } else if (overallText === '❌') {
+              overallClass = 'outdated-cell';
+            } else {
+              overallClass = '';
+            }
+          }
+
+          // Build product cells:
           const productCells = ['caz','ppi','sri','ppz','ppv','vp2','pac'].map(p => {
             const ts = station[p];
             let cellClass = '';
             let displayText = ts || '';
 
             if (!ts || ts === 'Missing') {
-              cellClass = 'missing-cell'; // orange for missing
+              cellClass = 'missing-invalid-cell'; // orange for missing & invalid
               displayText = 'Missing';
             } else {
               const dt = parseKolkataTime(ts);
               if (!dt || isNaN(dt.getTime())) {
-                cellClass = 'invalid-cell'; // pink for invalid timestamp
+                cellClass = 'missing-invalid-cell'; // orange for invalid timestamp
                 displayText = ts + ' (Invalid)';
               } else {
                 const diffMins = (Date.now() - dt.getTime()) / 60000;
                 const threshold = PRODUCT_THRESHOLDS[p] || 90;
                 if (diffMins > threshold) {
-                  cellClass = 'invalid-cell'; // pink for outdated
+                  cellClass = 'outdated-cell'; // yellow for outdated
                 } else {
                   cellClass = 'ok-cell'; // green for up-to-date
                 }
@@ -261,7 +290,7 @@
             <td>${slCounter}</td>
             <td>${station.name} (${station.station.toUpperCase()})</td>
             ${productCells}
-            <td>${station.overall}</td>
+            <td class="${overallClass}">${overallText}</td>
           `;
         }
 
@@ -273,15 +302,7 @@
     }
 
     function parseKolkataTime(str) {
-      // Assuming str format: "YYYY-MM-DD HH:mm:ss"
-      // Create Date object in Asia/Kolkata timezone
-      
-      // Since JS Date does not support timezones well, treat string as local Kolkata time
-      // We'll parse components manually and create Date in UTC offset +5:30
-
       if (!str) return null;
-
-      // Split date and time
       const [datePart, timePart] = str.trim().split(' ');
       if (!datePart || !timePart) return null;
 
@@ -290,13 +311,7 @@
 
       if ([year, month, day, hours, minutes, seconds].some(isNaN)) return null;
 
-      // Create a Date object in UTC:
-      // Kolkata is UTC+5:30, so subtract 5:30 to get UTC time
-      // e.g. local Kolkata time = UTC + 5h30m
-      // So to get UTC from Kolkata, subtract 5:30 from time
-
       const utcDate = new Date(Date.UTC(year, month - 1, day, hours, minutes, seconds));
-      // Subtract 5 hours 30 mins to convert Kolkata -> UTC
       utcDate.setMinutes(utcDate.getMinutes() - 330);
 
       return utcDate;
