@@ -44,7 +44,7 @@ STATION_INFO = {
     "slp": {"name": "Solapur", "state": "Maharashtra"},
     "srn": {"name": "Srinagar", "state": "Jammu & Kashmir"},
     "tvm": {"name": "Trivandrum", "state": "Kerala"},
-    "vrv": {"name": "Veravai", "state": "Maharashtra"},
+    "vrv": {"name": "Veravali", "state": "Maharashtra"},
     "vsk": {"name": "Visakhapatnam", "state": "Andhra Pradesh"}
 }
 
