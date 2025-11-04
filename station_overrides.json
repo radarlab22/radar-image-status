@@ -34,5 +34,11 @@
     "status": "Power Issue",
     "date": "2025-05-30",
     "time": ""
+  },
+  {
+    "stn": "vrv",
+    "status": "Under Maintainence",
+    "date": "2025-11-04",
+    "time": ""
   }
 ]
