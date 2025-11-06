@@ -2,9 +2,9 @@ name: Manual Station Update
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '50 4 * * *'   # 10:20 AM IST
-    - cron: '50 11 * * *'  # 5:20 PM IST
+  #schedule:
+    #- cron: '50 4 * * *'   # 10:20 AM IST
+    #- cron: '50 11 * * *'  # 5:20 PM IST
 
 jobs:
   update:
